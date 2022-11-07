@@ -5,7 +5,7 @@ from collections import namedtuple
 from enums import DrawMode, NodeState
 from Node import Node, node_colors
 
-
+LatticeDim = namedtuple('LatticeDim', ['nrows', 'ncols'])
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
 LatticeInfo = namedtuple('LatticeInfo', ['screen_dim', 'node_size'])
 
@@ -34,14 +34,14 @@ class Lattice:
                 row.append(Node())
             self.values.append(row)
 
-    def clear_lattice(self) -> None:
-        self.values = []
-
     def get_draw_mode(self) -> DrawMode:
         return self.draw_mode
 
     def get_info(self) -> LatticeInfo:
         return self.info
+
+    def get_dim(self) -> LatticeDim:
+        return LatticeDim(self.nrows, self.ncols)
 
     def randomize(self) -> None:
         '''
@@ -75,3 +75,6 @@ class Lattice:
                     node_colour,
                     pg.Rect(r, c, self.info.node_size, self.info.node_size),
                 )
+
+    def clear_lattice(self) -> None:
+        self.values = []
