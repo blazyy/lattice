@@ -71,7 +71,13 @@ class Lattice:
         for _ in range(self.nrows):
             row = []
             for _ in range(self.ncols):
-                row.append(Node(random.choice([state for state in [NodeState.WALL, NodeState.VACANT]])))
+                row.append(
+                    Node(
+                        random.choice(
+                            [state for state in [NodeState.WALL, NodeState.VACANT]]
+                        )
+                    )
+                )
             self.values.append(row)
 
     def change_node_state(self, r: int, c: int) -> None:
