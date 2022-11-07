@@ -2,11 +2,11 @@ import random
 import pygame as pg
 from collections import namedtuple
 
-from Node import Node, NodeState, node_colors
+from enums import DrawMode, NodeState
+from Node import Node, node_colors
 
 
-LatticeInfo = namedtuple(
-    'LatticeInfo', ['screen_width', 'screen_height', 'node_size'])
+LatticeInfo = namedtuple('LatticeInfo', ['screen_width', 'screen_height', 'node_size'])
 
 
 class Lattice:
@@ -21,14 +21,24 @@ class Lattice:
 
         self.values = []
         self.info = lattice_info
-        self.nrows = self.info.screen_height // self.info.node_size
-        self.ncols = self.info.screen_width // self.info.node_size
+        self.draw_mode = DrawMode.WALL
+        self.node_size = self.info.node_size
+        self.screen_width = self.info.screen_width
+        self.screen_height = self.info.screen_height
+        self.ncols = self.screen_width // self.node_size
+        self.nrows = self.screen_height // self.node_size
 
         for _ in range(self.nrows):
-            self.values.append([Node()] * self.ncols)
+            row = []
+            for _ in range(self.ncols):
+                row.append(Node())
+            self.values.append(row)
 
     def clear_lattice(self):
         self.values = []
+
+    def get_current_draw_mode(self):
+        return self.draw_mode
 
     def randomize(self):
         '''
@@ -39,8 +49,7 @@ class Lattice:
         for _ in range(self.nrows):
             row = []
             for _ in range(self.ncols):
-                row.append(
-                    Node(random.choice([state for state in NodeState])))
+                row.append(Node(random.choice([state for state in NodeState])))
             self.values.append(row)
 
     def get_node(self, r: int, c: int):
@@ -50,14 +59,14 @@ class Lattice:
 
         return self.values[r][c]
 
-    def flip_node_state(self, r: int, c: int):
-        self.values[r][c].flip_state()
+    def flip_node_state(self, r: int, c: int, draw_mode: DrawMode):
+        self.values[r][c].flip_state(draw_mode)
 
     def draw(self, screen: pg.display):
-        for r in range(0, self.info.screen_width, self.info.node_size):
-            for c in range(0, self.info.screen_height,  self.info.node_size):
-                node = self.values[r //
-                                   self.info.node_size][c // self.info.node_size]
+        for r in range(0, self.info.screen_width, self.node_size):
+            for c in range(0, self.screen_height, self.node_size):
+                node = self.values[r // self.node_size][c // self.node_size]
                 node_colour = node_colors[node.get_state()]
-                pg.draw.rect(screen, node_colour, pg.Rect(
-                    r, c, self.info.node_size, self.info.node_size))
+                pg.draw.rect(
+                    screen, node_colour, pg.Rect(r, c, self.node_size, self.node_size)
+                )

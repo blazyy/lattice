@@ -1,21 +1,7 @@
-from enum import Enum
+from enums import DrawMode, NodeState
 
 
-class NodeState(Enum):
-    OFF = 0
-    ON = 1
-
-    def opposite(self):
-        if self is NodeState.OFF:
-            return NodeState.ON
-        elif self is NodeState.ON:
-            return NodeState.OFF
-
-
-node_colors = {
-    NodeState.OFF: 'black',
-    NodeState.ON: 'white'
-}
+node_colors = {NodeState.WALL: 'black', NodeState.VACANT: 'white'}
 
 
 class Node:
@@ -23,14 +9,15 @@ class Node:
     Representation of a single node in the entire lattice.
     '''
 
-    def __init__(self, state: NodeState = NodeState.OFF):
+    def __init__(self, state: NodeState = NodeState.VACANT):
         self.state = state
 
     def get_state(self):
         return self.state
 
-    def flip_state(self):
-        self.state = self.state.opposite()
+    def flip_state(self, draw_mode: DrawMode):
+        if draw_mode == DrawMode.WALL and self.state == NodeState.VACANT:
+            self.state = self.state.opposite()
 
     def __repr__(self):
         return f'{self.state}'
