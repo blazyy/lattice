@@ -43,17 +43,17 @@ class Lattice:
                 row.append(Node())
             self.values.append(row)
 
-    def get_draw_mode(self) -> DrawMode:
-        return self.draw_mode
-
-    def set_draw_mode(self, new_draw_mode: DrawMode) -> None:
-        self.draw_mode = new_draw_mode
-
     def get_info(self) -> LatticeInfo:
         return self.info
 
     def get_dim(self) -> LatticeDim:
         return LatticeDim(self.nrows, self.ncols)
+
+    def get_draw_mode(self) -> DrawMode:
+        return self.draw_mode
+
+    def set_draw_mode(self, new_draw_mode: DrawMode) -> None:
+        self.draw_mode = new_draw_mode
 
     def randomize(self) -> None:
         '''
@@ -64,7 +64,7 @@ class Lattice:
         for _ in range(self.nrows):
             row = []
             for _ in range(self.ncols):
-                row.append(Node(random.choice([state for state in NodeState])))
+                row.append(Node(random.choice([state for state in [NodeState.WALL, NodeState.VACANT]])))
             self.values.append(row)
 
     def get_node(self, r: int, c: int) -> Node:
@@ -74,7 +74,7 @@ class Lattice:
 
         return self.values[r][c]
 
-    def set_node_state(self, r: int, c: int) -> None:
+    def change_node_state(self, r: int, c: int) -> None:
         new_state = draw_mode_to_node_state_mapping[self.draw_mode]
         self.values[r][c].set_state(new_state)
 

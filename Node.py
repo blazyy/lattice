@@ -1,4 +1,4 @@
-from enums import DrawMode, NodeState
+from enums import NodeState
 
 
 node_colors = {

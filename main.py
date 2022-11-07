@@ -43,7 +43,7 @@ while True:
             x, y = pg.mouse.get_pos()
             r = x // lattice_info.node_size
             c = y // lattice_info.node_size
-            lattice.set_node_state(r, c)
+            lattice.change_node_state(r, c)
 
     lattice.draw(screen)
     pg.display.flip()
