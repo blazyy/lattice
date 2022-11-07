@@ -1,7 +1,11 @@
 from enums import DrawMode, NodeState
 
 
-node_colors = {NodeState.WALL: 'black', NodeState.VACANT: 'white'}
+node_colors = {
+    NodeState.WALL: 'black',
+    NodeState.VACANT: 'white',
+    NodeState.ORIGIN: 'green',
+}
 
 
 class Node:
@@ -15,9 +19,5 @@ class Node:
     def get_state(self) -> NodeState:
         return self.state
 
-    def flip_state(self, draw_mode: DrawMode) -> None:
-        if draw_mode == DrawMode.WALL and self.state == NodeState.VACANT:
-            self.state = self.state.opposite()
-
-    def __repr__(self) -> str:
-        return f'{self.state}'
+    def set_state(self, new_state: NodeState) -> None:
+        self.state = new_state

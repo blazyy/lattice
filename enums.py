@@ -2,15 +2,12 @@ from enum import Enum
 
 
 class DrawMode(Enum):
-    WALL = 1
+    SET_WALL = 0
+    SET_ORIGIN = 1
+    SET_VACANT = 2
 
 
 class NodeState(Enum):
     VACANT = 0
     WALL = 1
-
-    def opposite(self):
-        if self is NodeState.VACANT:
-            return NodeState.WALL
-        elif self is NodeState.WALL:
-            return NodeState.VACANT
+    ORIGIN = 2

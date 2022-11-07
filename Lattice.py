@@ -1,5 +1,6 @@
 import random
 import pygame as pg
+from typing import Dict
 from collections import namedtuple
 
 from enums import DrawMode, NodeState
@@ -8,6 +9,14 @@ from Node import Node, node_colors
 LatticeDim = namedtuple('LatticeDim', ['nrows', 'ncols'])
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
 LatticeInfo = namedtuple('LatticeInfo', ['screen_dim', 'node_size'])
+
+DrawModeToNodeStateMapping = Dict[DrawMode, NodeState]
+
+draw_mode_to_node_state_mapping: DrawModeToNodeStateMapping = {
+    DrawMode.SET_WALL: NodeState.WALL,
+    DrawMode.SET_ORIGIN: NodeState.ORIGIN,
+    DrawMode.SET_VACANT: NodeState.VACANT,
+}
 
 
 class Lattice:
@@ -24,7 +33,7 @@ class Lattice:
 
         self.values = []
         self.info = lattice_info
-        self.draw_mode = DrawMode.WALL
+        self.draw_mode = DrawMode.SET_WALL
         self.ncols = lattice_info.screen_dim.w // lattice_info.node_size
         self.nrows = lattice_info.screen_dim.h // lattice_info.node_size
 
@@ -36,6 +45,9 @@ class Lattice:
 
     def get_draw_mode(self) -> DrawMode:
         return self.draw_mode
+
+    def set_draw_mode(self, new_draw_mode: DrawMode) -> None:
+        self.draw_mode = new_draw_mode
 
     def get_info(self) -> LatticeInfo:
         return self.info
@@ -62,8 +74,9 @@ class Lattice:
 
         return self.values[r][c]
 
-    def flip_node_state(self, r: int, c: int, draw_mode: DrawMode) -> None:
-        self.values[r][c].flip_state(draw_mode)
+    def set_node_state(self, r: int, c: int) -> None:
+        new_state = draw_mode_to_node_state_mapping[self.draw_mode]
+        self.values[r][c].set_state(new_state)
 
     def draw(self, screen: pg.Overlay) -> None:
         for r in range(0, self.info.screen_dim.w, self.info.node_size):
