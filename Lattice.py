@@ -49,6 +49,13 @@ class Lattice:
     def get_dim(self) -> LatticeDim:
         return LatticeDim(self.nrows, self.ncols)
 
+    def get_node(self, r: int, c: int) -> Node:
+        '''
+        Given the row and column index, returns the specific node from the entire lattice.
+        '''
+
+        return self.values[r][c]
+
     def get_draw_mode(self) -> DrawMode:
         return self.draw_mode
 
@@ -60,19 +67,12 @@ class Lattice:
         Resets current lattice state and randomly initializes each node to either be NodeState.ON or NodeState.OFF.
         '''
 
-        self.clear_lattice()
+        self.clear()
         for _ in range(self.nrows):
             row = []
             for _ in range(self.ncols):
                 row.append(Node(random.choice([state for state in [NodeState.WALL, NodeState.VACANT]])))
             self.values.append(row)
-
-    def get_node(self, r: int, c: int) -> Node:
-        '''
-        Given the row and column index, returns the specific node from the entire lattice.
-        '''
-
-        return self.values[r][c]
 
     def change_node_state(self, r: int, c: int) -> None:
         new_state = draw_mode_to_node_state_mapping[self.draw_mode]
@@ -89,5 +89,7 @@ class Lattice:
                     pg.Rect(r, c, self.info.node_size, self.info.node_size),
                 )
 
-    def clear_lattice(self) -> None:
-        self.values = []
+    def clear(self) -> None:
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                self.values[r][c].set_state(NodeState.VACANT)
