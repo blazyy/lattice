@@ -6,18 +6,19 @@ from enums import NodeState
 
 
 @pytest.fixture
-def node():
+def node() -> Node:
     return Node()
 
+
 @pytest.fixture
-def lattice():
-  return Lattice()
+def lattice() -> Lattice:
+    return Lattice()
 
 
 class TestNode:
-    def test_vacant_state(self, node: Node):
+    def test_vacant_state(self, node: Node) -> None:
         assert node.get_state() == NodeState.VACANT
 
-    def test_flip(self, node: Node, lattice: Lattice):
-      node.flip_state(lattice.get_draw_mode())
-      assert node.get_state() == NodeState.WALL
+    def test_flip(self, node: Node, lattice: Lattice) -> None:
+        node.flip_state(lattice.get_draw_mode())
+        assert node.get_state() == NodeState.WALL

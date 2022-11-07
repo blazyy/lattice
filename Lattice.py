@@ -17,7 +17,7 @@ class Lattice:
 
     def __init__(
         self, lattice_info: LatticeInfo = LatticeInfo(ScreenDim(500, 500), 20)
-    ):
+    ) -> None:
         '''
         Initializes the lattice with nodes that are OFF.
         '''
@@ -34,19 +34,16 @@ class Lattice:
                 row.append(Node())
             self.values.append(row)
 
-    def clear_lattice(self):
+    def clear_lattice(self) -> None:
         self.values = []
 
-    def get_draw_mode(self):
+    def get_draw_mode(self) -> DrawMode:
         return self.draw_mode
 
-    def get_info(self):
+    def get_info(self) -> LatticeInfo:
         return self.info
 
-    def get_dim(self):
-        return
-
-    def randomize(self):
+    def randomize(self) -> None:
         '''
         Resets current lattice state and randomly initializes each node to either be NodeState.ON or NodeState.OFF.
         '''
@@ -58,17 +55,17 @@ class Lattice:
                 row.append(Node(random.choice([state for state in NodeState])))
             self.values.append(row)
 
-    def get_node(self, r: int, c: int):
+    def get_node(self, r: int, c: int) -> Node:
         '''
         Given the row and column index, returns the specific node from the entire lattice.
         '''
 
         return self.values[r][c]
 
-    def flip_node_state(self, r: int, c: int, draw_mode: DrawMode):
+    def flip_node_state(self, r: int, c: int, draw_mode: DrawMode) -> None:
         self.values[r][c].flip_state(draw_mode)
 
-    def draw(self, screen: pg.display):
+    def draw(self, screen: pg.Overlay) -> None:
         for r in range(0, self.info.screen_dim.w, self.info.node_size):
             for c in range(0, self.info.screen_dim.h, self.info.node_size):
                 node = self.values[r // self.info.node_size][c // self.info.node_size]
