@@ -1,8 +1,8 @@
 import pytest
 import random
 
-from enums import DrawMode
 from Node import Node
+from enums import DrawMode
 from Lattice import Lattice, LatticeInfo, ScreenDim
 
 
@@ -15,7 +15,7 @@ class TestLattice:
     def test_initial_state(self, lattice: Lattice) -> None:
         assert type(lattice.get_info()) == LatticeInfo
         assert type(lattice.get_info().screen_dim) == ScreenDim
-        assert lattice.get_draw_mode() == DrawMode.WALL
+        assert lattice.get_draw_mode() == DrawMode.SET_WALL
 
     def test_get_dim(self, lattice: Lattice) -> None:
         dim = lattice.get_dim()
