@@ -2,14 +2,15 @@ import sys
 import pygame as pg
 
 from enums import DrawMode
-from Lattice import Lattice, LatticeInfo
+from Lattice import Lattice, LatticeInfo, ScreenDim
 
 pg.init()
 
 
-lattice_info = LatticeInfo(500, 500, 20)
+screen_dim = ScreenDim(500, 500)
+lattice_info = LatticeInfo(screen_dim, 20)
 
-screen = pg.display.set_mode((lattice_info.screen_width, lattice_info.screen_height))
+screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h))
 
 lattice = Lattice(lattice_info)
 # lattice.randomize()
@@ -33,7 +34,7 @@ while True:
             lattice.flip_node_state(
                 r // lattice_info.node_size,
                 c // lattice_info.node_size,
-                lattice.get_current_draw_mode(),
+                lattice.get_draw_mode(),
             )
 
     # screen.fill('white')

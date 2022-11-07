@@ -6,7 +6,8 @@ from enums import DrawMode, NodeState
 from Node import Node, node_colors
 
 
-LatticeInfo = namedtuple('LatticeInfo', ['screen_width', 'screen_height', 'node_size'])
+ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
+LatticeInfo = namedtuple('LatticeInfo', ['screen_dim', 'node_size'])
 
 
 class Lattice:
@@ -14,7 +15,9 @@ class Lattice:
     2D matrix, where each singular value is a node.
     '''
 
-    def __init__(self, lattice_info: LatticeInfo):
+    def __init__(
+        self, lattice_info: LatticeInfo = LatticeInfo(ScreenDim(500, 500), 20)
+    ):
         '''
         Initializes the lattice with nodes that are OFF.
         '''
@@ -22,11 +25,8 @@ class Lattice:
         self.values = []
         self.info = lattice_info
         self.draw_mode = DrawMode.WALL
-        self.node_size = self.info.node_size
-        self.screen_width = self.info.screen_width
-        self.screen_height = self.info.screen_height
-        self.ncols = self.screen_width // self.node_size
-        self.nrows = self.screen_height // self.node_size
+        self.ncols = lattice_info.screen_dim.w // lattice_info.node_size
+        self.nrows = lattice_info.screen_dim.h // lattice_info.node_size
 
         for _ in range(self.nrows):
             row = []
@@ -37,8 +37,14 @@ class Lattice:
     def clear_lattice(self):
         self.values = []
 
-    def get_current_draw_mode(self):
+    def get_draw_mode(self):
         return self.draw_mode
+
+    def get_info(self):
+        return self.info
+
+    def get_dim(self):
+        return
 
     def randomize(self):
         '''
@@ -63,10 +69,12 @@ class Lattice:
         self.values[r][c].flip_state(draw_mode)
 
     def draw(self, screen: pg.display):
-        for r in range(0, self.info.screen_width, self.node_size):
-            for c in range(0, self.screen_height, self.node_size):
-                node = self.values[r // self.node_size][c // self.node_size]
+        for r in range(0, self.info.screen_dim.w, self.info.node_size):
+            for c in range(0, self.info.screen_dim.h, self.info.node_size):
+                node = self.values[r // self.info.node_size][c // self.info.node_size]
                 node_colour = node_colors[node.get_state()]
                 pg.draw.rect(
-                    screen, node_colour, pg.Rect(r, c, self.node_size, self.node_size)
+                    screen,
+                    node_colour,
+                    pg.Rect(r, c, self.info.node_size, self.info.node_size),
                 )
