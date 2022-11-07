@@ -1,32 +1,26 @@
+from Lattice import Lattice, LatticeInfo
 import sys
-import random
 import pygame as pg
 pg.init()
 
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 1000
-GRID_UNIT_SIZE = 20
-screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)) # Creates a new Surface object that represents the actual displayed graphics. Any drawing you do to this Surface will become visible on the monitor
-black = 0, 0, 0
 
-def get_empty_grid():
-    grid = []
-    for _ in range(SCREEN_HEIGHT // GRID_UNIT_SIZE):
-        grid.append([0] * (SCREEN_WIDTH // GRID_UNIT_SIZE))
-    return grid
+lattice_info = LatticeInfo(500, 500, 20)
 
-def draw_grid(pg, screen, grid):
-    for r in range(0, SCREEN_WIDTH, GRID_UNIT_SIZE):
-        for c in range(0, SCREEN_HEIGHT, GRID_UNIT_SIZE):
-            pg.draw.rect(screen, 'white', pg.Rect(r, c, GRID_UNIT_SIZE, GRID_UNIT_SIZE), 1)
+screen = pg.display.set_mode(
+    (lattice_info.screen_width, lattice_info.screen_height))
 
-
-grid = get_empty_grid()
+lattice = Lattice(lattice_info)
+lattice.randomize()
 
 while True:
     for event in pg.event.get():
-        if event.type == pg.QUIT: sys.exit()
-    screen.fill(black)
-    # pg.draw.rect(screen, 'white', pg.Rect(30, 30, 60, 60))
-    draw_grid(pg, screen, grid)
-    pg.display.flip() # Makes sure everything that we've drawn on the screen becomes visible.
+        if event.type == pg.QUIT:
+            sys.exit()
+        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+            r, c = pg.mouse.get_pos()
+            lattice.flip_node_state(
+                r // lattice_info.node_size, c // lattice_info.node_size)
+    screen.fill('black')
+    lattice.draw(screen)
+    # Makes sure everything that we've drawn on the screen becomes visible.
+    pg.display.flip()
