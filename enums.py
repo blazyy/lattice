@@ -14,3 +14,4 @@ class NodeState(Enum):
     ORIGIN = 2
     GOAL = 3
     VISITED = 4
+    PATH = 5

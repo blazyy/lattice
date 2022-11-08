@@ -179,9 +179,12 @@ class Lattice:
 
     def clear(self) -> None:
         '''
-        Sets all nodes in the lattice to the state NodeState.VACANT.
+        Sets all nodes in the lattice to the state NodeState.VACANT, and also resets the origin
+        and goal nodes to None.
         '''
 
+        self.origin = None
+        self.goal = None
         for r in range(self.nrows):
             for c in range(self.ncols):
-                self.values[r][c].set_state(NodeState.VACANT)
+                self.values[r][c].reset()

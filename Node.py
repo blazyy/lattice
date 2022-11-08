@@ -1,3 +1,6 @@
+from __future__ import (
+    annotations,
+)  # Used for type hinting to set type of class method to class itself, i.e. in set_predecessor() function below.
 from collections import namedtuple
 
 from enums import NodeState
@@ -9,9 +12,11 @@ node_colors = {
     NodeState.ORIGIN: 'green',
     NodeState.GOAL: 'red',
     NodeState.VISITED: 'blue',
+    NodeState.PATH: 'yellow',
 }
 
 Pos = namedtuple('pos', ['r', 'c'])
+
 
 class Node:
     '''
@@ -25,6 +30,7 @@ class Node:
 
         self.state = state
         self.pos = pos
+        self.predecessor = None
 
     def get_state(self) -> NodeState:
         '''
@@ -46,3 +52,27 @@ class Node:
         '''
 
         return self.pos
+
+    def set_predecessor(self, predecessor: Node) -> None:
+        '''
+        Sets the predecessor, i.e. the node that came before the current node
+        for a certain path.
+        '''
+
+        self.predecessor = predecessor
+
+    def get_predecessor(self) -> Node:
+        '''
+        Returns the predecessor, i.e. the node that came before the current node
+        for a certain path.
+        '''
+
+        return self.predecessor
+
+    def reset(self) -> None:
+        '''
+        Resets the node by setting state to NodeState.VACANT and setting predecessor to None.
+        '''
+
+        self.state = NodeState.VACANT
+        self.predecessor = None
