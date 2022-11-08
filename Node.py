@@ -5,6 +5,7 @@ node_colors = {
     NodeState.WALL: 'black',
     NodeState.VACANT: 'white',
     NodeState.ORIGIN: 'green',
+    NodeState.GOAL: 'red',
 }
 
 
@@ -31,5 +32,5 @@ class Node:
         '''
         Sets the node's state to the new provided NodeState.
         '''
-        
+
         self.state = new_state

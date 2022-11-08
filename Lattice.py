@@ -15,6 +15,7 @@ draw_mode_to_node_state_mapping: DrawModeToNodeStateMapping = {
     DrawMode.SET_WALL: NodeState.WALL,
     DrawMode.SET_ORIGIN: NodeState.ORIGIN,
     DrawMode.SET_VACANT: NodeState.VACANT,
+    DrawMode.SET_GOAL: NodeState.GOAL,
 }
 
 
@@ -36,6 +37,7 @@ class Lattice:
         self.ncols = lattice_info.screen_dim.w // lattice_info.node_size
         self.nrows = lattice_info.screen_dim.h // lattice_info.node_size
         self.origin_set = False
+        self.goal_set = False
 
         for _ in range(self.nrows):
             row = []
@@ -108,8 +110,8 @@ class Lattice:
         new_state = draw_mode_to_node_state_mapping[
             self.draw_mode
         ]  # Get the appropriate NodeState based on draw_mode.
-        
-        # If conditions below restrict only one origin node to be set.
+
+        # If conditions below restrict only one origin node and one goal node to be set.
         if new_state == NodeState.ORIGIN:
             if not self.origin_set:
                 self.origin_set = True
@@ -117,6 +119,13 @@ class Lattice:
                 return
         elif node.get_state() == NodeState.ORIGIN and new_state != NodeState.ORIGIN:
             self.origin_set = False
+        elif new_state == NodeState.GOAL:
+            if not self.goal_set:
+                self.goal_set = True
+            else:
+                return
+        elif node.get_state() == NodeState.GOAL and new_state != NodeState.GOAL:
+            self.goal_set = False
         node.set_state(new_state)
 
     def draw(self, screen: pg.Overlay) -> None:

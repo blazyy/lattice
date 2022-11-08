@@ -10,8 +10,9 @@ from Lattice import Lattice, LatticeInfo, ScreenDim
 
 EventKeyToDrawModeMapping = Dict[int, DrawMode]
 event_key_to_draw_mode_mapping = {
-    pg.K_s: DrawMode.SET_ORIGIN,
+    pg.K_o: DrawMode.SET_ORIGIN,
     pg.K_e: DrawMode.SET_VACANT,
+    pg.K_g: DrawMode.SET_GOAL,
 }
 
 screen_dim = ScreenDim(500, 500)
