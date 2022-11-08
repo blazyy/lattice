@@ -1,11 +1,11 @@
 import sys
 import pygame as pg
 
+pg.init()
+
 from typing import Dict
 from enums import DrawMode
 from Lattice import Lattice, LatticeInfo, ScreenDim
-
-pg.init()
 
 
 EventKeyToDrawModeMapping = Dict[int, DrawMode]
@@ -14,16 +14,15 @@ event_key_to_draw_mode_mapping = {
     pg.K_e: DrawMode.SET_VACANT,
 }
 
-
 screen_dim = ScreenDim(500, 500)
 lattice_info = LatticeInfo(screen_dim, 20)
-screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h))
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
-
-lattice = Lattice(lattice_info)
+screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h))
 
 mouse_pressed = False
 current_draw_mode = DrawMode.SET_WALL
+
+lattice = Lattice(lattice_info)
 
 while True:
     for event in pg.event.get():

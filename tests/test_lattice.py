@@ -30,7 +30,6 @@ class TestLattice:
         rand_c = random.randrange(lattice.get_dim().ncols)
         assert type(lattice.get_node(rand_r, rand_c)) == Node
 
-
     def test_get_draw_mode(self, lattice: Lattice) -> None:
         assert type(lattice.get_draw_mode()) == DrawMode
 
@@ -53,7 +52,9 @@ class TestLattice:
         for draw_mode in DrawMode:
             lattice.set_draw_mode(draw_mode)
             lattice.change_node_state(0, 0)
-            lattice.get_node(0, 0).get_state() == draw_mode_to_node_state_mapping[draw_mode]
+            lattice.get_node(0, 0).get_state() == draw_mode_to_node_state_mapping[
+                draw_mode
+            ]
 
     def test_clear_lattice(self, lattice: Lattice) -> None:
         lattice.clear()
@@ -61,6 +62,3 @@ class TestLattice:
         for r in range(nrows):
             for c in range(ncols):
                 assert lattice.get_node(r, c).get_state() == NodeState.VACANT
-
-            
-    
