@@ -1,6 +1,7 @@
+import os
 import random
 import pygame as pg
-from typing import Dict
+from typing import Dict, Tuple
 from collections import namedtuple
 
 from enums import DrawMode, NodeState
@@ -170,27 +171,16 @@ class Lattice:
         node_colors dictionary.
         '''
 
-        for r in range(0, self.info.screen_dim.w, self.info.node_size):
-            for c in range(0, self.info.screen_dim.h, self.info.node_size):
-                node = self.values[r // self.info.node_size][c // self.info.node_size]
+        for x in range(0, self.info.screen_dim.w, self.info.node_size):
+            for y in range(0, self.info.screen_dim.h, self.info.node_size):
+                r, c = x // self.info.node_size, y // self.info.node_size
+                node = self.values[r][c]
                 node_colour = node_colors[node.get_state()]
                 pg.draw.rect(
                     self.pg_screen,
                     node_colour,
-                    pg.Rect(r, c, self.info.node_size, self.info.node_size),
+                    pg.Rect(x, y, self.info.node_size, self.info.node_size),
                 )
-
-    def clear(self) -> None:
-        '''
-        Sets all nodes in the lattice to the state NodeState.VACANT, and also resets the origin
-        and goal nodes to None.
-        '''
-
-        self.origin = None
-        self.goal = None
-        for r in range(self.nrows):
-            for c in range(self.ncols):
-                self.values[r][c].reset()
 
     def update_screen(self) -> None:
         '''
@@ -275,3 +265,15 @@ class Lattice:
                             queue.append(neighbour)
         print('BFS: Path not found!')
         return False
+
+    def clear(self) -> None:
+        '''
+        Sets all nodes in the lattice to the state NodeState.VACANT, and also resets the origin
+        and goal nodes to None.
+        '''
+
+        self.origin = None
+        self.goal = None
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                self.values[r][c].reset()

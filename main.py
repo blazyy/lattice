@@ -1,12 +1,10 @@
 import sys
-import time
 import pygame as pg
 
 pg.init()
 
 from typing import Dict
-from Node import Node
-from enums import DrawMode, NodeState
+from enums import DrawMode
 from Lattice import Lattice, LatticeInfo, ScreenDim
 
 
@@ -25,7 +23,6 @@ mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
 screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h))
 
 mouse_pressed = False
-current_draw_mode = DrawMode.SET_WALL
 
 lattice = Lattice(screen, lattice_info)
 
