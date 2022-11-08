@@ -31,7 +31,7 @@ while True:
             sys.exit()
         if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pressed = True
-        if event.type == pg.MOUSEBUTTONUP:
+        if event.type == pg.MOUSEBUTTONUP and event.button == 1:
             mouse_pressed = False
 
         if event.type == pg.KEYDOWN:

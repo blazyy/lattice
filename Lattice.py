@@ -47,7 +47,8 @@ class Lattice:
 
     def get_info(self) -> LatticeInfo:
         '''
-        Returns a namedtuple LatticeInfo containing three different pieces of information: The screen dimensions, and the node size.
+        Returns a namedtuple LatticeInfo containing three different pieces of information: The screen
+        dimensions, and the node size.
         '''
 
         return self.info
@@ -69,8 +70,8 @@ class Lattice:
 
     def get_draw_mode(self) -> DrawMode:
         '''
-        Returns the current draw_mode.
-        Depending on draw_mode, the state that a particular Node gets set to when change_node_state() is called will change.
+        Returns the current draw_mode. Depending on draw_mode, the state that a particular Node
+        gets set to when change_node_state() is called will change.
         '''
 
         return self.draw_mode
@@ -84,8 +85,9 @@ class Lattice:
 
     def randomize(self) -> None:
         '''
-        Resets all nodes in current lattice to the state NodeState.VACANT, and randomly initializes each node to either be NodeState.VACANT or NodeState.WALL.
-        Nodes are set to NodeState.VACANT and not entirely replaced to keep the original object intact. Sounds like a good thing to do.
+        Resets all nodes in current lattice to the state NodeState.VACANT, and randomly initializes
+        each node to either be NodeState.VACANT or NodeState.WALL. Nodes are set to NodeState.VACANT
+        and not entirely replaced to keep the original object intact.
         '''
 
         self.clear()
@@ -111,7 +113,7 @@ class Lattice:
             self.draw_mode
         ]  # Get the appropriate NodeState based on draw_mode.
 
-        # If conditions below restrict only one origin node and one goal node to be set.
+        # Conditions below restrict only one origin node and one goal node to be set.
         if new_state == NodeState.ORIGIN:
             if not self.origin_set:
                 self.origin_set = True
