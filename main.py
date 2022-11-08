@@ -38,6 +38,9 @@ while True:
                 event_key_to_draw_mode_mapping.get(event.key, DrawMode.SET_WALL)
             )
 
+        if event.type == pg.KEYUP:
+            lattice.set_draw_mode(DrawMode.SET_WALL)
+
         if mouse_pressed:
             x, y = pg.mouse.get_pos()
             r = x // lattice_info.node_size

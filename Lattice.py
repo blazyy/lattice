@@ -35,6 +35,7 @@ class Lattice:
         self.draw_mode = DrawMode.SET_WALL
         self.ncols = lattice_info.screen_dim.w // lattice_info.node_size
         self.nrows = lattice_info.screen_dim.h // lattice_info.node_size
+        self.origin_set = False
 
         for _ in range(self.nrows):
             row = []
@@ -103,8 +104,20 @@ class Lattice:
         Given the row and column number, sets the node to a new state depending on draw_mode.
         '''
 
-        new_state = draw_mode_to_node_state_mapping[self.draw_mode]
-        self.values[r][c].set_state(new_state)
+        node = self.values[r][c]
+        new_state = draw_mode_to_node_state_mapping[
+            self.draw_mode
+        ]  # Get the appropriate NodeState based on draw_mode.
+        
+        # If conditions below restrict only one origin node to be set.
+        if new_state == NodeState.ORIGIN:
+            if not self.origin_set:
+                self.origin_set = True
+            else:
+                return
+        elif node.get_state() == NodeState.ORIGIN and new_state != NodeState.ORIGIN:
+            self.origin_set = False
+        node.set_state(new_state)
 
     def draw(self, screen: pg.Overlay) -> None:
         '''
