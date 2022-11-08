@@ -25,7 +25,9 @@ class Lattice:
     '''
 
     def __init__(
-        self, lattice_info: LatticeInfo = LatticeInfo(ScreenDim(500, 500), 20)
+        self,
+        pg_screen: pg.Surface,
+        lattice_info: LatticeInfo = LatticeInfo(ScreenDim(500, 500), 20),
     ) -> None:
         '''
         Initializes the lattice with nodes that have the value NodeState.VACANT.
@@ -38,6 +40,7 @@ class Lattice:
         self.nrows = lattice_info.screen_dim.h // lattice_info.node_size
         self.origin = None
         self.goal = None
+        self.pg_screen = pg_screen
 
         for r in range(self.nrows):
             row = []
@@ -161,10 +164,10 @@ class Lattice:
             neighbours.append(self.values[r][c + 1])
         return neighbours
 
-    def draw(self, screen: pg.Overlay) -> None:
+    def draw(self) -> None:
         '''
-        Given pygame's Overlay object, i.e. the screen, draws the current lattice configuration.
-        The colour of the nodes is dependent on the node_colors dictionary.
+        Draws the current lattice configuration. The colour of the nodes is dependent on the
+        node_colors dictionary.
         '''
 
         for r in range(0, self.info.screen_dim.w, self.info.node_size):
@@ -172,7 +175,7 @@ class Lattice:
                 node = self.values[r // self.info.node_size][c // self.info.node_size]
                 node_colour = node_colors[node.get_state()]
                 pg.draw.rect(
-                    screen,
+                    self.pg_screen,
                     node_colour,
                     pg.Rect(r, c, self.info.node_size, self.info.node_size),
                 )
@@ -188,3 +191,87 @@ class Lattice:
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
+
+    def update_screen(self) -> None:
+        '''
+        Updates the screen. Used to show intermediary steps when a graph traversal is happening.
+        '''
+
+        self.draw()
+        pg.display.flip()
+
+    def display_path_to_origin(self, node) -> None:
+        '''
+        After a path is found (this method doesn't check for that!), this method traverses through
+        the given node's predecessors until the origin is reached (which won't have a predecessor)
+        '''
+
+        while node.get_predecessor():  # Prints the path from goal to origin
+            if node.get_state() not in [
+                NodeState.ORIGIN,
+                NodeState.GOAL,
+            ]:  # Doesn't overrwrite states of the origin and the goal
+                node.set_state(NodeState.PATH)
+            self.update_screen()
+            node = node.get_predecessor()
+
+    def dfs(self) -> bool:
+        '''
+        Does a Depth-first Search from the given origin node to the goal node. The preference of
+        the direction the DFS takes is influenced by the get_neighbours() function. Depending on
+        the order of the if conditions, this direction might be changed.
+        '''
+
+        stack = [self.origin]
+        while stack:
+            node = stack.pop()
+            if node == self.goal:
+                self.display_path_to_origin(node)
+                print('DFS: Path found!')
+                return True
+            if node.get_state() not in [NodeState.WALL, NodeState.VISITED]:
+                if node.get_state() not in [
+                    NodeState.ORIGIN,
+                    NodeState.GOAL,
+                ]:  # Only set as visited if the node isn't origin/goal. This is because origin/goal nodes are never set to visited.
+                    node.set_state(NodeState.VISITED)
+                self.update_screen()
+                for neighbour in self.get_neighbours(node):
+                    if neighbour.get_state() not in [NodeState.WALL, NodeState.VISITED]:
+                        neighbour.set_predecessor(
+                            node
+                        )  # When adding a neighbour to the stack, mark the predecessor as the current node so that we have a route back to the origin once the goal is found
+                        stack.append(neighbour)
+        print('DFS: Path not found!')
+        return False
+
+    def bfs(self) -> bool:
+        '''
+        Does a Breadth-first Search from the given origin node to the goal node.
+        '''
+
+        queue = [self.origin]
+        while queue:
+            for _ in range(len(queue)):
+                node = queue.pop(0)
+                if node == self.goal:
+                    self.display_path_to_origin(node)
+                    print('BFS: Path found!')
+                    return True
+                if node.get_state() not in [NodeState.WALL, NodeState.VISITED]:
+                    if node.get_state() not in [
+                        NodeState.ORIGIN,
+                        NodeState.GOAL,
+                    ]:  # Only set as visited if the node isn't origin/goal. This is because origin/goal nodes are never set to visited.
+                        node.set_state(NodeState.VISITED)
+                    self.update_screen()
+                    for neighbour in self.get_neighbours(node):
+                        if neighbour.get_state() not in [
+                            NodeState.WALL,
+                            NodeState.VISITED,
+                            NodeState.ORIGIN,  # As far as I can tell, the last state (NodeState.ORIGIN) is only in this list for BFS because a predecessor was being set on the origin node, which isn't supposed to happen.
+                        ]:
+                            neighbour.set_predecessor(node)
+                            queue.append(neighbour)
+        print('BFS: Path not found!')
+        return False
