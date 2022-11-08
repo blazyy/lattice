@@ -30,6 +30,12 @@ class TestLattice:
         rand_c = random.randrange(lattice.get_dim().ncols)
         assert type(lattice.get_node(rand_r, rand_c)) == Node
 
+    def test_get_origin(self, lattice: Lattice) -> None:
+        assert lattice.get_origin() is None
+
+    def get_goal(self, lattice: Lattice) -> None:
+        assert lattice.get_goal() is None
+
     def test_get_draw_mode(self, lattice: Lattice) -> None:
         assert type(lattice.get_draw_mode()) == DrawMode
 

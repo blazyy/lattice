@@ -4,7 +4,7 @@ from typing import Dict
 from collections import namedtuple
 
 from enums import DrawMode, NodeState
-from Node import Node, node_colors
+from Node import Node, node_colors, Pos
 
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
 LatticeDim = namedtuple('LatticeDim', ['nrows', 'ncols'])
@@ -36,13 +36,13 @@ class Lattice:
         self.draw_mode = DrawMode.SET_WALL
         self.ncols = lattice_info.screen_dim.w // lattice_info.node_size
         self.nrows = lattice_info.screen_dim.h // lattice_info.node_size
-        self.origin_set = False
-        self.goal_set = False
+        self.origin = None
+        self.goal = None
 
-        for _ in range(self.nrows):
+        for r in range(self.nrows):
             row = []
-            for _ in range(self.ncols):
-                row.append(Node())
+            for c in range(self.ncols):
+                row.append(Node(Pos(r, c)))
             self.values.append(row)
 
     def get_info(self) -> LatticeInfo:
@@ -67,6 +67,20 @@ class Lattice:
         '''
 
         return self.values[r][c]
+
+    def get_origin(self) -> Node:
+        '''
+        Returns the origin node.
+        '''
+
+        return self.origin
+
+    def get_goal(self) -> Node:
+        '''
+        Returns the goal node.
+        '''
+
+        return self.goal
 
     def get_draw_mode(self) -> DrawMode:
         '''
@@ -115,20 +129,37 @@ class Lattice:
 
         # Conditions below restrict only one origin node and one goal node to be set.
         if new_state == NodeState.ORIGIN:
-            if not self.origin_set:
-                self.origin_set = True
+            if not self.origin:
+                self.origin = node
             else:
                 return
         elif node.get_state() == NodeState.ORIGIN and new_state != NodeState.ORIGIN:
-            self.origin_set = False
+            self.origin = None
         elif new_state == NodeState.GOAL:
-            if not self.goal_set:
-                self.goal_set = True
+            if not self.goal:
+                self.goal = node
             else:
                 return
         elif node.get_state() == NodeState.GOAL and new_state != NodeState.GOAL:
-            self.goal_set = False
+            self.goal = None
         node.set_state(new_state)
+
+    def get_neighbours(self, node: Node) -> list:
+        '''
+        Given a node, returns a list of all the neighbouring nodes.
+        '''
+
+        neighbours = []
+        r, c = node.get_pos().r, node.get_pos().c
+        if r > 0:
+            neighbours.append(self.values[r - 1][c])
+        if r < self.nrows - 1:
+            neighbours.append(self.values[r + 1][c])
+        if c > 0:
+            neighbours.append(self.values[r][c - 1])
+        if c < self.ncols - 1:
+            neighbours.append(self.values[r][c + 1])
+        return neighbours
 
     def draw(self, screen: pg.Overlay) -> None:
         '''

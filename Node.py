@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from enums import NodeState
 
 
@@ -6,20 +8,23 @@ node_colors = {
     NodeState.VACANT: 'white',
     NodeState.ORIGIN: 'green',
     NodeState.GOAL: 'red',
+    NodeState.VISITED: 'blue',
 }
 
+Pos = namedtuple('pos', ['r', 'c'])
 
 class Node:
     '''
     Representation of a single node in the entire lattice.
     '''
 
-    def __init__(self, state: NodeState = NodeState.VACANT) -> None:
+    def __init__(self, pos: Pos, state: NodeState = NodeState.VACANT) -> None:
         '''
         Initializes the node with the value NodeState.VACANT.
         '''
 
         self.state = state
+        self.pos = pos
 
     def get_state(self) -> NodeState:
         '''
@@ -34,3 +39,10 @@ class Node:
         '''
 
         self.state = new_state
+
+    def get_pos(self) -> Pos:
+        '''
+        Returns the node's position, which is of type Pos.
+        '''
+
+        return self.pos

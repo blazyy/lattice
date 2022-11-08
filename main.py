@@ -4,7 +4,8 @@ import pygame as pg
 pg.init()
 
 from typing import Dict
-from enums import DrawMode
+from Node import Node
+from enums import DrawMode, NodeState
 from Lattice import Lattice, LatticeInfo, ScreenDim
 
 
@@ -17,6 +18,8 @@ event_key_to_draw_mode_mapping = {
 
 screen_dim = ScreenDim(500, 500)
 lattice_info = LatticeInfo(screen_dim, 20)
+
+clock = pg.time.Clock()
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
 screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h))
 
@@ -24,6 +27,24 @@ mouse_pressed = False
 current_draw_mode = DrawMode.SET_WALL
 
 lattice = Lattice(lattice_info)
+
+path_found = False
+def dfs(lattice: Lattice, origin: Node, goal: Node):
+    visited = set()
+    stack = [origin]
+    while stack:
+        pg.time.wait(1000)
+        node = stack.pop()
+        if node == goal:
+            print('Path found!')
+            return True
+        if node not in visited and node.state != NodeState.WALL:
+            visited.add(node)
+            node.set_state(NodeState.VISITED)
+            for neighbor in lattice.get_neighbours(node):
+                stack.append(neighbor)
+    return False
+    
 
 while True:
     for event in pg.event.get():
@@ -36,8 +57,11 @@ while True:
 
         if event.type == pg.KEYDOWN:
             lattice.set_draw_mode(
-                event_key_to_draw_mode_mapping.get(event.key, DrawMode.SET_WALL)
+                event_key_to_draw_mode_mapping.get(event.key, DrawMode.SET_WALL) # If an invalid key is pressed, the draw mode will be set to DrawMode.SET_WALL
             )
+
+        if lattice.get_goal() and lattice.get_origin() and not path_found:
+            path_found = dfs(lattice, lattice.get_origin(), lattice.get_goal())
 
         if event.type == pg.KEYUP:
             lattice.set_draw_mode(DrawMode.SET_WALL)

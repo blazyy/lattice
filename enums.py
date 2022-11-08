@@ -13,3 +13,4 @@ class NodeState(Enum):
     WALL = 1
     ORIGIN = 2
     GOAL = 3
+    VISITED = 4
