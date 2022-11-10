@@ -5,6 +5,7 @@ pg.init()
 
 from typing import Dict
 from enums import DrawMode
+from Node import Pos
 from Lattice import Lattice, LatticeInfo, ScreenDim
 
 
@@ -16,7 +17,7 @@ event_key_to_draw_mode_mapping = {
 }
 
 screen_dim = ScreenDim(500, 500)
-lattice_info = LatticeInfo(screen_dim, 20)
+lattice_info = LatticeInfo(screen_dim, 5)
 
 clock = pg.time.Clock()
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
@@ -25,6 +26,7 @@ screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim
 mouse_pressed = False
 
 lattice = Lattice(screen, lattice_info)
+lattice.init_screen()
 
 
 while True:
@@ -57,6 +59,5 @@ while True:
             x, y = pg.mouse.get_pos()
             r = x // lattice_info.node_size
             c = y // lattice_info.node_size
-            lattice.change_node_state(r, c)
-
-    lattice.update_screen()
+            pos = Pos(r, c)
+            lattice.change_node_state_on_user_input(pos)

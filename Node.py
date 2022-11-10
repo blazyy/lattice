@@ -6,7 +6,7 @@ from collections import namedtuple
 from enums import NodeState
 
 
-node_colors = {
+node_colours = {
     NodeState.WALL: 'black',
     NodeState.VACANT: 'white',
     NodeState.ORIGIN: 'green',

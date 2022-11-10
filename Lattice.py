@@ -1,11 +1,10 @@
-import os
 import random
 import pygame as pg
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 from collections import namedtuple
 
 from enums import DrawMode, NodeState
-from Node import Node, node_colors, Pos
+from Node import Node, node_colours, Pos
 
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
 LatticeDim = namedtuple('LatticeDim', ['nrows', 'ncols'])
@@ -89,7 +88,7 @@ class Lattice:
     def get_draw_mode(self) -> DrawMode:
         '''
         Returns the current draw_mode. Depending on draw_mode, the state that a particular Node
-        gets set to when change_node_state() is called will change.
+        gets set to when change_node_state_on_user_input() is called will change.
         '''
 
         return self.draw_mode
@@ -101,32 +100,59 @@ class Lattice:
 
         self.draw_mode = new_draw_mode
 
-    def randomize(self) -> None:
+    def init_screen(self) -> None:
         '''
-        Resets all nodes in current lattice to the state NodeState.VACANT, and randomly initializes
-        each node to either be NodeState.VACANT or NodeState.WALL. Nodes are set to NodeState.VACANT
-        and not entirely replaced to keep the original object intact.
+        Draws the initial lattice configuration, which is just the entire lattice with
+        node states set to NodeState.VACANT.
         '''
 
-        self.clear()
-        for _ in range(self.nrows):
-            row = []
-            for _ in range(self.ncols):
-                row.append(
-                    Node(
-                        random.choice(
-                            [state for state in [NodeState.WALL, NodeState.VACANT]]
-                        )
-                    )
+        for x in range(0, self.info.screen_dim.w, self.info.node_size):
+            for y in range(0, self.info.screen_dim.h, self.info.node_size):
+                pg.draw.rect(
+                    self.pg_screen,
+                    node_colours[NodeState.VACANT],
+                    pg.Rect(x, y, self.info.node_size, self.info.node_size),
                 )
-            self.values.append(row)
+        pg.display.flip()
 
-    def change_node_state(self, r: int, c: int) -> None:
+    def get_coords_from_pos(self, pos: Pos) -> Tuple[int, int]:
         '''
-        Given the row and column number, sets the node to a new state depending on draw_mode.
+        Given a Pos tuple containing a node's row and column number, returns the x and y
+        coordinate (top left) of that particular node.
         '''
 
-        node = self.values[r][c]
+        x, y = pos.r * self.info.node_size, pos.c * self.info.node_size
+        return (x, y)
+
+    def render_node(self, node: Node) -> pg.Rect:
+        '''
+        Renders the given node.
+        '''
+
+        pos = node.get_pos()
+        x, y = self.get_coords_from_pos(pos)
+        new_node_rect = pg.draw.rect(
+            self.pg_screen,
+            node_colours[node.get_state()],
+            pg.Rect(x, y, self.info.node_size, self.info.node_size),
+        )
+        pg.display.update(new_node_rect)
+
+    def update_node_state(self, node: Node, new_state: NodeState) -> None:
+        '''
+        Updates a node's state and renders it on the screen.
+        '''
+
+        node.set_state(new_state)
+        self.render_node(node)
+
+    def change_node_state_on_user_input(self, pos: Pos) -> None:
+        '''
+        Given the Pos tuple of a node, sets the node to a new state depending on draw_mode.
+        This function is used for user-input: drawing walls, setting the goal and origin, etc.
+        '''
+
+        node = self.values[pos.r][pos.c]
         new_state = draw_mode_to_node_state_mapping[
             self.draw_mode
         ]  # Get the appropriate NodeState based on draw_mode.
@@ -146,9 +172,10 @@ class Lattice:
                 return
         elif node.get_state() == NodeState.GOAL and new_state != NodeState.GOAL:
             self.goal = None
-        node.set_state(new_state)
 
-    def get_neighbours(self, node: Node) -> list:
+        self.update_node_state(node, new_state)
+
+    def get_neighbours(self, node: Node) -> List:
         '''
         Given a node, returns a list of all the neighbouring nodes.
         '''
@@ -164,31 +191,6 @@ class Lattice:
         if c < self.ncols - 1:
             neighbours.append(self.values[r][c + 1])
         return neighbours
-
-    def draw(self) -> None:
-        '''
-        Draws the current lattice configuration. The colour of the nodes is dependent on the
-        node_colors dictionary.
-        '''
-
-        for x in range(0, self.info.screen_dim.w, self.info.node_size):
-            for y in range(0, self.info.screen_dim.h, self.info.node_size):
-                r, c = x // self.info.node_size, y // self.info.node_size
-                node = self.values[r][c]
-                node_colour = node_colors[node.get_state()]
-                pg.draw.rect(
-                    self.pg_screen,
-                    node_colour,
-                    pg.Rect(x, y, self.info.node_size, self.info.node_size),
-                )
-
-    def update_screen(self) -> None:
-        '''
-        Updates the screen. Used to show intermediary steps when a graph traversal is happening.
-        '''
-
-        self.draw()
-        pg.display.flip()
 
     def display_path_to_origin(self, node) -> None:
         '''
@@ -206,11 +208,10 @@ class Lattice:
             ]:  # Doesn't overrwrite states of the origin and the goal
                 path.append(node)
             node = node.get_predecessor()
-        
+
         path.reverse()
         for node in path:
-            node.set_state(NodeState.PATH)
-            self.update_screen()
+            self.update_node_state(node, NodeState.PATH)
 
     def dfs(self) -> bool:
         '''
@@ -231,8 +232,7 @@ class Lattice:
                     NodeState.ORIGIN,
                     NodeState.GOAL,
                 ]:  # Only set as visited if the node isn't origin/goal. This is because origin/goal nodes are never set to visited.
-                    node.set_state(NodeState.VISITED)
-                self.update_screen()
+                    self.update_node_state(node, NodeState.VISITED)
                 for neighbour in self.get_neighbours(node):
                     if neighbour.get_state() not in [NodeState.WALL, NodeState.VISITED]:
                         neighbour.set_predecessor(
@@ -260,8 +260,7 @@ class Lattice:
                         NodeState.ORIGIN,
                         NodeState.GOAL,
                     ]:  # Only set as visited if the node isn't origin/goal. This is because origin/goal nodes are never set to visited.
-                        node.set_state(NodeState.VISITED)
-                    self.update_screen()
+                        self.update_node_state(node, NodeState.VISITED)
                     for neighbour in self.get_neighbours(node):
                         if neighbour.get_state() not in [
                             NodeState.WALL,
@@ -284,3 +283,4 @@ class Lattice:
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
+        self.init_screen()
