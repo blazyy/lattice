@@ -204,6 +204,7 @@ class Lattice:
         while node.get_predecessor():  # Prints the path from goal to origin
             if node.get_state() not in [
                 NodeState.ORIGIN,
+                NodeState.GOAL,
             ]:  # Doesn't overrwrite states of the origin and the goal
                 path.append(node)
             node = node.get_predecessor()
