@@ -193,17 +193,24 @@ class Lattice:
     def display_path_to_origin(self, node) -> None:
         '''
         After a path is found (this method doesn't check for that!), this method traverses through
-        the given node's predecessors until the origin is reached (which won't have a predecessor)
+        the given node's predecessors until the origin is reached (which won't have a predecessor).
+        Since visualization should be done from origin to goal, the results from the previous
+        step is added to a list which would be reversed, and then would be visualized.
         '''
 
+        path = []
         while node.get_predecessor():  # Prints the path from goal to origin
             if node.get_state() not in [
                 NodeState.ORIGIN,
                 NodeState.GOAL,
             ]:  # Doesn't overrwrite states of the origin and the goal
-                node.set_state(NodeState.PATH)
-            self.update_screen()
+                path.append(node)
             node = node.get_predecessor()
+        
+        path.reverse()
+        for node in path:
+            node.set_state(NodeState.PATH)
+            self.update_screen()
 
     def dfs(self) -> bool:
         '''
