@@ -17,7 +17,7 @@ event_key_to_draw_mode_mapping = {
 }
 
 screen_dim = ScreenDim(500, 500)
-lattice_info = LatticeInfo(screen_dim, 5)
+lattice_info = LatticeInfo(screen_dim, 10)
 
 clock = pg.time.Clock()
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
@@ -42,9 +42,11 @@ while True:
             if event.key == pg.K_r:
                 lattice.clear()
             elif event.key == pg.K_d and lattice.get_goal() and lattice.get_origin():
-                lattice.dfs()
+                path_found = lattice.dfs()
+                print('Path found') if path_found else print('Path not found!')
             elif event.key == pg.K_b and lattice.get_goal() and lattice.get_origin():
-                lattice.bfs()
+                path_found = lattice.bfs()
+                print('Path found') if path_found else print('Path not found!')
             else:
                 lattice.set_draw_mode(
                     event_key_to_draw_mode_mapping.get(
@@ -61,3 +63,5 @@ while True:
             c = y // lattice_info.node_size
             pos = Pos(r, c)
             lattice.change_node_state_on_user_input(pos)
+
+    clock.tick(60)

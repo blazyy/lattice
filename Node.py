@@ -76,3 +76,10 @@ class Node:
 
         self.state = NodeState.VACANT
         self.predecessor = None
+
+    def __repr__(self) -> str:
+        '''
+        Returns the Pos tuple value for the node in a string format. Used for console output.
+        '''
+
+        return f'({self.pos.r}, {self.pos.c})'

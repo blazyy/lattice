@@ -204,7 +204,6 @@ class Lattice:
         while node.get_predecessor():  # Prints the path from goal to origin
             if node.get_state() not in [
                 NodeState.ORIGIN,
-                NodeState.GOAL,
             ]:  # Doesn't overrwrite states of the origin and the goal
                 path.append(node)
             node = node.get_predecessor()
@@ -225,21 +224,17 @@ class Lattice:
             node = stack.pop()
             if node == self.goal:
                 self.display_path_to_origin(node)
-                print('DFS: Path found!')
                 return True
             if node.get_state() not in [NodeState.WALL, NodeState.VISITED]:
-                if node.get_state() not in [
-                    NodeState.ORIGIN,
-                    NodeState.GOAL,
-                ]:  # Only set as visited if the node isn't origin/goal. This is because origin/goal nodes are never set to visited.
-                    self.update_node_state(node, NodeState.VISITED)
+                self.update_node_state(
+                    node, NodeState.VISITED
+                ) if node.get_state() != NodeState.ORIGIN else ''
                 for neighbour in self.get_neighbours(node):
-                    if neighbour.get_state() not in [NodeState.WALL, NodeState.VISITED]:
+                    if neighbour.get_state() not in [NodeState.WALL, NodeState.VISITED, NodeState.ORIGIN]:
                         neighbour.set_predecessor(
                             node
                         )  # When adding a neighbour to the stack, mark the predecessor as the current node so that we have a route back to the origin once the goal is found
                         stack.append(neighbour)
-        print('DFS: Path not found!')
         return False
 
     def bfs(self) -> bool:
@@ -253,23 +248,27 @@ class Lattice:
                 node = queue.pop(0)
                 if node == self.goal:
                     self.display_path_to_origin(node)
-                    print('BFS: Path found!')
                     return True
-                if node.get_state() not in [NodeState.WALL, NodeState.VISITED]:
-                    if node.get_state() not in [
-                        NodeState.ORIGIN,
-                        NodeState.GOAL,
-                    ]:  # Only set as visited if the node isn't origin/goal. This is because origin/goal nodes are never set to visited.
-                        self.update_node_state(node, NodeState.VISITED)
+                if node.get_state() not in [
+                    NodeState.WALL,
+                    NodeState.VISITED,
+                ]:  # If node isn't visited or isn't a wall, mark as visited, if isn't isn't an origin node. Also, note to self: I was confused as to why we need to check if
+                    # a node is visited or not again when we're already checking for that below when adding the neighbours into the queue. The reason is because a particular
+                    # node might exist in the queue at a certain point in time more than once. I.e. node c being a neighbour of a, node c being a neighbour of b, and node
+                    # b being a neighbour of a. When a is being processed, c will be added. Next, when b is processed, c will also be added. Since the same node can be added
+                    # multiple times into the queue, we need to check if it's visited again.
+                    self.update_node_state(
+                        node, NodeState.VISITED
+                    ) if node.get_state() != NodeState.ORIGIN else ''
                     for neighbour in self.get_neighbours(node):
                         if neighbour.get_state() not in [
                             NodeState.WALL,
                             NodeState.VISITED,
-                            NodeState.ORIGIN,  # As far as I can tell, the last state (NodeState.ORIGIN) is only in this list for BFS because a predecessor was being set on the origin node, which isn't supposed to happen.
+                            NodeState.ORIGIN,  # As far as I can tell, the last state (NodeState.ORIGIN) is only in this list for BFS because a predecessor was being set on the origin node,
+                            # which isn't supposed to happen. We don't need to check if state is NodeState.GOAL because algorithm terminates immediately when the goal node is found
                         ]:
                             neighbour.set_predecessor(node)
                             queue.append(neighbour)
-        print('BFS: Path not found!')
         return False
 
     def clear(self) -> None:
