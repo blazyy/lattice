@@ -230,7 +230,11 @@ class Lattice:
                     node, NodeState.VISITED
                 ) if node.get_state() != NodeState.ORIGIN else ''
                 for neighbour in self.get_neighbours(node):
-                    if neighbour.get_state() not in [NodeState.WALL, NodeState.VISITED, NodeState.ORIGIN]:
+                    if neighbour.get_state() not in [
+                        NodeState.WALL,
+                        NodeState.VISITED,
+                        NodeState.ORIGIN,
+                    ]:
                         neighbour.set_predecessor(
                             node
                         )  # When adding a neighbour to the stack, mark the predecessor as the current node so that we have a route back to the origin once the goal is found
