@@ -4,6 +4,7 @@ from __future__ import (
 from collections import namedtuple
 
 from enums import NodeState
+from typing import Optional
 
 
 node_colours = {
@@ -15,13 +16,16 @@ node_colours = {
     NodeState.PATH: 'yellow',
 }
 
-Pos = namedtuple('pos', ['r', 'c'])
+Pos = namedtuple('Pos', ['r', 'c'])
 
 
 class Node:
     '''
     Representation of a single node in the entire lattice.
     '''
+
+    # Type hints
+    predecessor: Optional[Node]
 
     def __init__(self, pos: Pos, state: NodeState = NodeState.VACANT) -> None:
         '''
@@ -61,7 +65,7 @@ class Node:
 
         self.predecessor = predecessor
 
-    def get_predecessor(self) -> Node:
+    def get_predecessor(self) -> Optional[Node]:
         '''
         Returns the predecessor, i.e. the node that came before the current node
         for a certain path.

@@ -1,6 +1,6 @@
 import random
 import pygame as pg
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from collections import namedtuple
 
 from enums import DrawMode, NodeState
@@ -26,7 +26,7 @@ class Lattice:
 
     def __init__(
         self,
-        pg_screen: pg.Surface,
+        pg_screen: pg.surface.Surface,
         lattice_info: LatticeInfo = LatticeInfo(ScreenDim(500, 500), 20),
     ) -> None:
         '''
@@ -71,14 +71,14 @@ class Lattice:
 
         return self.values[r][c]
 
-    def get_origin(self) -> Node:
+    def get_origin(self) -> Optional[Node]:
         '''
         Returns the origin node.
         '''
 
         return self.origin
 
-    def get_goal(self) -> Node:
+    def get_goal(self) -> Optional[Node]:
         '''
         Returns the goal node.
         '''
@@ -100,45 +100,51 @@ class Lattice:
 
         self.draw_mode = new_draw_mode
 
+    def get_node_coords(self, node: Node) -> Tuple[int, int]:
+        '''
+        Given a node, returns it's x and y coordinates (top left).
+        '''
+
+        pos = node.get_pos()
+        x, y = pos.r * self.info.node_size, pos.c * self.info.node_size
+        return (x, y)
+
+    def get_rect_from_node(self, node: Node) -> pg.rect.Rect:
+        '''
+        Gets a pygame Rect object from a given node.
+        '''
+
+        x, y = self.get_node_coords(node)
+        rect = pg.draw.rect(
+            self.pg_screen,
+            node_colours[node.get_state()],
+            pg.Rect(x, y, self.info.node_size, self.info.node_size),
+        )
+        return rect
+
     def init_screen(self) -> None:
         '''
         Draws the initial lattice configuration, which is just the entire lattice with
         node states set to NodeState.VACANT.
         '''
 
-        for x in range(0, self.info.screen_dim.w, self.info.node_size):
-            for y in range(0, self.info.screen_dim.h, self.info.node_size):
-                pg.draw.rect(
-                    self.pg_screen,
-                    node_colours[NodeState.VACANT],
-                    pg.Rect(x, y, self.info.node_size, self.info.node_size),
-                )
-        pg.display.flip()
+        new_rects = []
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                node = self.get_node(r, c)
+                new_rect = self.get_rect_from_node(node)
+                new_rects.append(new_rect)
+        pg.display.update(new_rects)  # type: ignore
 
-    def get_coords_from_pos(self, pos: Pos) -> Tuple[int, int]:
-        '''
-        Given a Pos tuple containing a node's row and column number, returns the x and y
-        coordinate (top left) of that particular node.
-        '''
-
-        x, y = pos.r * self.info.node_size, pos.c * self.info.node_size
-        return (x, y)
-
-    def render_node(self, node: Node) -> pg.Rect:
+    def render_node(self, node: Node) -> None:
         '''
         Renders the given node.
         '''
 
-        pos = node.get_pos()
-        x, y = self.get_coords_from_pos(pos)
-        new_node_rect = pg.draw.rect(
-            self.pg_screen,
-            node_colours[node.get_state()],
-            pg.Rect(x, y, self.info.node_size, self.info.node_size),
-        )
-        pg.display.update(new_node_rect)
+        node_rect = self.get_rect_from_node(node)
+        pg.display.update(node_rect)
 
-    def update_node_state(self, node: Node, new_state: NodeState) -> None:
+    def update_node_state_and_render(self, node: Node, new_state: NodeState) -> None:
         '''
         Updates a node's state and renders it on the screen.
         '''
@@ -173,7 +179,7 @@ class Lattice:
         elif node.get_state() == NodeState.GOAL and new_state != NodeState.GOAL:
             self.goal = None
 
-        self.update_node_state(node, new_state)
+        self.update_node_state_and_render(node, new_state)
 
     def get_neighbours(self, node: Node) -> List:
         '''
@@ -211,7 +217,7 @@ class Lattice:
 
         path.reverse()
         for node in path:
-            self.update_node_state(node, NodeState.PATH)
+            self.update_node_state_and_render(node, NodeState.PATH)
 
     def dfs(self) -> bool:
         '''
@@ -226,8 +232,11 @@ class Lattice:
             if node == self.goal:
                 self.display_path_to_origin(node)
                 return True
-            if node.get_state() not in [NodeState.WALL, NodeState.VISITED]:
-                self.update_node_state(
+            if node and node.get_state() not in [
+                NodeState.WALL,
+                NodeState.VISITED,
+            ]:  # The `if node` is just to suppress mypy warnings
+                self.update_node_state_and_render(
                     node, NodeState.VISITED
                 ) if node.get_state() != NodeState.ORIGIN else ''
                 for neighbour in self.get_neighbours(node):
@@ -254,7 +263,7 @@ class Lattice:
                 if node == self.goal:
                     self.display_path_to_origin(node)
                     return True
-                if node.get_state() not in [
+                if node and node.get_state() not in [
                     NodeState.WALL,
                     NodeState.VISITED,
                 ]:  # If node isn't visited or isn't a wall, mark as visited, if isn't isn't an origin node. Also, note to self: I was confused as to why we need to check if
@@ -262,7 +271,7 @@ class Lattice:
                     # node might exist in the queue at a certain point in time more than once. I.e. node c being a neighbour of a, node c being a neighbour of b, and node
                     # b being a neighbour of a. When a is being processed, c will be added. Next, when b is processed, c will also be added. Since the same node can be added
                     # multiple times into the queue, we need to check if it's visited again.
-                    self.update_node_state(
+                    self.update_node_state_and_render(
                         node, NodeState.VISITED
                     ) if node.get_state() != NodeState.ORIGIN else ''
                     for neighbour in self.get_neighbours(node):
@@ -275,6 +284,23 @@ class Lattice:
                             neighbour.set_predecessor(node)
                             queue.append(neighbour)
         return False
+
+    def randomize(self, density: float) -> None:
+        '''
+        Randomly sets a node to a wall, depending on the density amount specified. Think of
+        this as the probability of a certain node being set to a wall.
+        '''
+
+        self.clear()
+        new_rects = []
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                if random.uniform(0, 1) < density:
+                    node = self.get_node(r, c)
+                    node.set_state(NodeState.WALL)
+                    new_rect = self.get_rect_from_node(node)
+                    new_rects.append(new_rect)
+        pg.display.update(new_rects)  # type: ignore
 
     def clear(self) -> None:
         '''

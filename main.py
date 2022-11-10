@@ -39,8 +39,10 @@ while True:
             mouse_pressed = False
 
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_r:
+            if event.key == pg.K_c:
                 lattice.clear()
+            if event.key == pg.K_r:
+                lattice.randomize(0.25)
             elif event.key == pg.K_d and lattice.get_goal() and lattice.get_origin():
                 path_found = lattice.dfs()
                 print('Path found') if path_found else print('Path not found!')
