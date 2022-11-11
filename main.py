@@ -26,7 +26,7 @@ screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim
 mouse_pressed = False
 
 lattice = Lattice(screen, lattice_info)
-lattice.init_screen()
+lattice.draw()
 
 
 while True:
@@ -41,6 +41,8 @@ while True:
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_c:
                 lattice.clear()
+            if event.key == pg.K_m:
+                lattice.generate_maze()
             if event.key == pg.K_r:
                 lattice.randomize(0.25)
             elif event.key == pg.K_d and lattice.get_goal() and lattice.get_origin():

@@ -122,10 +122,9 @@ class Lattice:
         )
         return rect
 
-    def init_screen(self) -> None:
+    def draw(self) -> None:
         '''
-        Draws the initial lattice configuration, which is just the entire lattice with
-        node states set to NodeState.VACANT.
+        Draws the lattice configuration.
         '''
 
         new_rects = []
@@ -302,6 +301,31 @@ class Lattice:
                     new_rects.append(new_rect)
         pg.display.update(new_rects)  # type: ignore
 
+    def fill(self) -> None:
+        self.origin = None
+        self.goal = None
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                self.values[r][c].set_state(NodeState.WALL)
+        self.draw()
+
+    def generate_maze(self) -> None:
+        self.fill()
+        r, c = random.randint(0, self.nrows - 1), random.randint(0, self.ncols - 1)
+        node = self.get_node(r, c)
+        stack = [node]
+        node.set_state(NodeState.VISITED_MAZE)
+        while stack:
+            node = stack.pop()
+            neighbours = self.get_neighbours(node)
+            unvisited_neighbours = list(filter(lambda x: x.get_state() != NodeState.VISITED_MAZE, neighbours))
+            if unvisited_neighbours:
+                stack.append(node)
+                rand_unvisited_neighbour = random.choice(unvisited_neighbours)
+                self.update_node_state_and_render(rand_unvisited_neighbour, NodeState.VACANT)
+                rand_unvisited_neighbour.set_state(NodeState.VISITED_MAZE)
+                stack.append(rand_unvisited_neighbour)
+
     def clear(self) -> None:
         '''
         Sets all nodes in the lattice to the state NodeState.VACANT, and also resets the origin
@@ -313,4 +337,4 @@ class Lattice:
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
-        self.init_screen()
+        self.draw()
