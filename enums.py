@@ -15,3 +15,4 @@ class NodeState(Enum):
     GOAL = 3
     VISITED = 4
     PATH = 5
+    VISITED_MAZE = 6

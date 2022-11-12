@@ -122,10 +122,9 @@ class Lattice:
         )
         return rect
 
-    def init_screen(self) -> None:
+    def draw(self) -> None:
         '''
-        Draws the initial lattice configuration, which is just the entire lattice with
-        node states set to NodeState.VACANT.
+        Draws the lattice configuration.
         '''
 
         new_rects = []
@@ -302,6 +301,100 @@ class Lattice:
                     new_rects.append(new_rect)
         pg.display.update(new_rects)  # type: ignore
 
+    def fill(self) -> None:
+        '''
+        Fills the entire grid with walls, i.e. sets all nodes to the state NodeState.WALL.
+        '''
+
+        self.origin = None
+        self.goal = None
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                self.values[r][c].set_state(NodeState.WALL)
+        self.draw()
+
+    def get_one_off_neighbours(self, node: Node) -> List:
+        '''
+        Given a node, returns a list of all the neighbouring nodes one node away. Used in maze
+        generation to skip a node due to the algorithm working backwards- i.e. making nodes
+        vacant from an initially fully filled maze.
+        '''
+
+        neighbours = []
+        r, c = node.get_pos().r, node.get_pos().c
+        if r > 1:
+            neighbours.append(self.values[r - 2][c])
+        if r < self.nrows - 2:
+            neighbours.append(self.values[r + 2][c])
+        if c > 1:
+            neighbours.append(self.values[r][c - 2])
+        if c < self.ncols - 2:
+            neighbours.append(self.values[r][c + 2])
+        return neighbours
+
+    def get_node_between(self, node_a: Node, node_b: Node) -> Node:
+        '''
+        Given two nodes on the same row/column, returns the node that is in between the two of
+        these nodes.
+        '''
+
+        node_a_pos = node_a.get_pos()
+        node_b_pos = node_b.get_pos()
+        r, c = 0, 0
+        if node_a_pos.r == node_b_pos.r:
+            r, c = (
+                node_a_pos.r,
+                min(node_a_pos.c, node_b_pos.c) + 1,
+            )  # If both nodes are on the same row, return the node in the middle (i.e. different column)
+        else:
+            r, c = (
+                min(node_a_pos.r, node_b_pos.r) + 1,
+                node_a_pos.c,
+            )  # If both nodes are on the same row, return the node in the middle (i.e. different row)
+        return self.get_node(r, c)
+
+    def generate_maze(self) -> None:
+        '''
+        Generates a maze using an iterative version of recrusive backtracking (using DFS). Usually, maze generation
+        algorithms shown on Wikipedia were algorithms meant for walls with "0" thickness, but since in my implementation
+        the walls and nodes are of the same size, I had to write some code to accodomate for this- i.e. self.get_one_off_neighbours()
+        which considers only neighbours that are one row or column away, and also self.get_node_between() which gets a node that's
+        inbetween two nodes, in order to turn it from a wall state to a vacant state.
+
+        Algorithm (adapted from wikipedia, under the randomized depth-first search - iterative implementation section):
+
+        1) Choose the initial cell (random choice), make it vacant and push it to the stack
+        2) While the stack is not empty:
+            1) Pop from the stack and make it a current cell
+            2) If the current cell has any neighbours which have not been visited
+                1) Push the current cell to the stack
+                2) Choose one of the unvisited neighbours
+                3) Remove the wall between the current cell and the chosen cell (i.e. make it vacant)
+                4) Mark the chosen cell as visited and push it to the stack
+        '''
+
+        self.fill()
+        r, c = random.randint(0, self.nrows - 2), random.randint(0, self.ncols - 2)
+        node = self.get_node(r, c)
+        stack = [node]
+        self.update_node_state_and_render(node, NodeState.VACANT)
+        while stack:
+            node = stack.pop()
+            neighbours = self.get_one_off_neighbours(node)
+            unvisited_neighbours = list(
+                filter(lambda x: x.get_state() != NodeState.VACANT, neighbours)
+            )
+            if unvisited_neighbours:
+                stack.append(node)
+                rand_unvisited_neighbour = random.choice(unvisited_neighbours)
+                node_between = self.get_node_between(node, rand_unvisited_neighbour)
+                self.update_node_state_and_render(node_between, NodeState.VACANT)
+                self.update_node_state_and_render(
+                    rand_unvisited_neighbour, NodeState.VACANT
+                )
+                stack.append(rand_unvisited_neighbour)
+        self.draw()
+
     def clear(self) -> None:
         '''
         Sets all nodes in the lattice to the state NodeState.VACANT, and also resets the origin
@@ -313,4 +406,4 @@ class Lattice:
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
-        self.init_screen()
+        self.draw()

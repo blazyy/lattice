@@ -13,6 +13,7 @@ node_colours = {
     NodeState.ORIGIN: 'green',
     NodeState.GOAL: 'red',
     NodeState.VISITED: 'blue',
+    NodeState.VISITED_MAZE: 'white',
     NodeState.PATH: 'yellow',
 }
 
