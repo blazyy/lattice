@@ -197,6 +197,23 @@ class Lattice:
             neighbours.append(self.values[r][c + 1])
         return neighbours
 
+    def get_one_off_neighbours(self, node: Node) -> List:
+        '''
+        Given a node, returns a list of all the neighbouring nodes one node away.
+        '''
+
+        neighbours = []
+        r, c = node.get_pos().r, node.get_pos().c
+        if r > 1:
+            neighbours.append(self.values[r - 2][c])
+        if r < self.nrows - 2:
+            neighbours.append(self.values[r + 2][c])
+        if c > 1:
+            neighbours.append(self.values[r][c - 2])
+        if c < self.ncols - 2:
+            neighbours.append(self.values[r][c + 2])
+        return neighbours
+
     def display_path_to_origin(self, node) -> None:
         '''
         After a path is found (this method doesn't check for that!), this method traverses through
@@ -309,20 +326,40 @@ class Lattice:
                 self.values[r][c].set_state(NodeState.WALL)
         self.draw()
 
+    def get_node_between(self, node_a: Node, node_b: Node) -> Node:
+        node_a_pos = node_a.get_pos()
+        node_b_pos = node_b.get_pos()
+        r, c = 0, 0
+        if node_a_pos.r == node_b_pos.r:
+            r, c = node_a_pos.r, min(node_a_pos.c, node_b_pos.c) + 1
+        else:
+            r, c = min(node_a_pos.r, node_b_pos.r) + 1, node_a_pos.c
+        r, c = min(self.nrows - 1, r), min(self.ncols - 1, c)
+        return self.get_node(r, c)
+
     def generate_maze(self) -> None:
         self.fill()
         r, c = random.randint(0, self.nrows - 1), random.randint(0, self.ncols - 1)
         node = self.get_node(r, c)
         stack = [node]
         node.set_state(NodeState.VISITED_MAZE)
+        self.update_node_state_and_render(node, NodeState.VACANT)
+
         while stack:
+
             node = stack.pop()
-            neighbours = self.get_neighbours(node)
-            unvisited_neighbours = list(filter(lambda x: x.get_state() != NodeState.VISITED_MAZE, neighbours))
+
+            neighbours = self.get_one_off_neighbours(node)
+            unvisited_neighbours = list(
+                filter(lambda x: x.get_state() != NodeState.VISITED_MAZE, neighbours)
+            )
             if unvisited_neighbours:
                 stack.append(node)
                 rand_unvisited_neighbour = random.choice(unvisited_neighbours)
-                self.update_node_state_and_render(rand_unvisited_neighbour, NodeState.VACANT)
+                node_between = self.get_node_between(node, rand_unvisited_neighbour)
+                if node_between.get_state() != NodeState.VACANT:
+                    self.update_node_state_and_render(node_between, NodeState.VACANT)
+                    self.update_node_state_and_render(rand_unvisited_neighbour, NodeState.VACANT)
                 rand_unvisited_neighbour.set_state(NodeState.VISITED_MAZE)
                 stack.append(rand_unvisited_neighbour)
 
@@ -333,7 +370,7 @@ class Lattice:
         '''
 
         self.origin = None
-        self.goal = None
+        self.goal = None 
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
