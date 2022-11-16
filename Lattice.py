@@ -24,11 +24,7 @@ class Lattice:
     2D array, where each singular value is of the class Node.
     '''
 
-    def __init__(
-        self,
-        pg_screen: pg.surface.Surface,
-        lattice_info: LatticeInfo = LatticeInfo(ScreenDim(500, 500), 20),
-    ) -> None:
+    def __init__(self, pg_screen: pg.surface.Surface, lattice_info) -> None:
         '''
         Initializes the lattice with nodes that have the value NodeState.VACANT.
         '''
@@ -180,7 +176,7 @@ class Lattice:
 
         self.update_node_state_and_render(node, new_state)
 
-    def get_neighbours(self, node: Node) -> List:
+    def get_neighbours(self, node: Node) -> List[Node]:
         '''
         Given a node, returns a list of all the neighbouring nodes.
         '''
@@ -323,13 +319,13 @@ class Lattice:
         neighbours = []
         r, c = node.get_pos().r, node.get_pos().c
         if r > 1:
-            neighbours.append(self.values[r - 2][c])
+            neighbours.append(self.get_node(r - 2, c))
         if r < self.nrows - 2:
-            neighbours.append(self.values[r + 2][c])
+            neighbours.append(self.get_node(r + 2, c))
         if c > 1:
-            neighbours.append(self.values[r][c - 2])
+            neighbours.append(self.get_node(r, c - 2))
         if c < self.ncols - 2:
-            neighbours.append(self.values[r][c + 2])
+            neighbours.append(self.get_node(r, c + 2))
         return neighbours
 
     def get_node_between(self, node_a: Node, node_b: Node) -> Node:
@@ -340,13 +336,12 @@ class Lattice:
 
         node_a_pos = node_a.get_pos()
         node_b_pos = node_b.get_pos()
-        r, c = 0, 0
         if node_a_pos.r == node_b_pos.r:
             r, c = (
                 node_a_pos.r,
                 min(node_a_pos.c, node_b_pos.c) + 1,
             )  # If both nodes are on the same row, return the node in the middle (i.e. different column)
-        else:
+        elif node_a_pos.c == node_b_pos.c:
             r, c = (
                 min(node_a_pos.r, node_b_pos.r) + 1,
                 node_a_pos.c,
@@ -374,8 +369,10 @@ class Lattice:
         '''
 
         self.fill()
-        r, c = random.randint(0, self.nrows - 2), random.randint(0, self.ncols - 2)
-        node = self.get_node(r, c)
+        r, c = random.randint(0, self.nrows - 2), random.randint(
+            0, self.ncols - 2
+        )  # -2 because the corner nodes are walls and we don't want to choose one of those for our starting path
+        node = self.get_node(1, 1)
         stack = [node]
         self.update_node_state_and_render(node, NodeState.VACANT)
         while stack:
@@ -388,12 +385,101 @@ class Lattice:
                 stack.append(node)
                 rand_unvisited_neighbour = random.choice(unvisited_neighbours)
                 node_between = self.get_node_between(node, rand_unvisited_neighbour)
+
+                # if rand_unvisited_neighbour.get_pos().r in [1, self.nrows - 1] or rand_unvisited_neighbour.get_pos().c in [1, self.ncols -1 ]:
+                #     print('RANDO!!')
+                # if node_between.get_pos().r in [1, self.nrows - 1] or node_between.get_pos().c in [1, self.ncols -1 ]:
+                #     print('BETWE!!')
+
                 self.update_node_state_and_render(node_between, NodeState.VACANT)
                 self.update_node_state_and_render(
                     rand_unvisited_neighbour, NodeState.VACANT
                 )
                 stack.append(rand_unvisited_neighbour)
         self.draw()
+
+    def get_num_live_neighbours(self, node: Node) -> int:
+        '''
+        From the eight neighbours for a particular cell, returns the number of cells which have the state NodeState.WALL.
+        '''
+
+        positions = [
+            [0, 1],
+            [0, -1],
+            [1, -1],
+            [-1, 1],
+            [1, 1],
+            [-1, -1],
+            [1, 0],
+            [-1, 0],
+        ]
+
+        num_live_neighbours = 0
+        node_pos = node.get_pos()
+        r, c = node_pos.r, node_pos.c
+        for position in positions:
+            new_r = r + position[0]
+            new_c = c + position[1]
+            if (
+                new_r >= 0
+                and new_r < self.nrows
+                and new_c >= 0
+                and new_c < self.ncols
+                and self.values[new_r][new_c].get_state() == NodeState.WALL
+            ):
+                num_live_neighbours += 1
+        return num_live_neighbours
+
+    def overwrite(self, new_values: List[List[Node]]) -> None:
+        '''
+        Given a new 2D array of nodes, completely overwrites the existing lattice with new values.
+        '''
+
+        self.values = new_values
+
+    def render_nodes(self, nodes: List[Node]) -> None:
+        '''
+        Renders the given nodes. Leaves rest of the screen untouched (i.e. same as the last render)
+        '''
+
+        node_rects = []
+        for node in nodes:
+            node_rects.append(self.get_rect_from_node(node))
+        pg.display.update(node_rects)
+
+    def game_of_life(self) -> None:
+        '''
+        Starts an emulation of Conway's Game of Life. NodeState.WALL is considered a live cell, NodeState.VACANT
+        is considered a dead cell.
+
+        Rules:
+        1) Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+        2) Any live cell with two or three live neighbours lives on to the next generation.
+        3) Any live cell with more than three live neighbours dies, as if by overpopulation.
+        4) Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+        '''
+
+        while True:
+            batch_update_list = (
+                []
+            )  # Since each generation is a pure function of the preceding one, we have to update the node states only after going through all of them once.
+            # A node's next-generation state shouldn't influence any current-generation node's state.
+            for r in range(self.nrows):
+                for c in range(self.ncols):
+                    node = self.get_node(r, c)
+                    is_node_alive = node.get_state() == NodeState.WALL
+                    num_live_neighbours = self.get_num_live_neighbours(node)
+                    if is_node_alive:
+                        if num_live_neighbours < 2 or num_live_neighbours > 3:
+                            batch_update_list.append([node, NodeState.VACANT])
+                    elif num_live_neighbours == 3:
+                        batch_update_list.append([node, NodeState.WALL])
+            nodes_to_update = []
+            for item in batch_update_list:
+                node, new_state = item
+                node.set_state(new_state)
+                nodes_to_update.append(node)
+            self.render_nodes(nodes_to_update)
 
     def clear(self) -> None:
         '''

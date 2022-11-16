@@ -16,7 +16,7 @@ event_key_to_draw_mode_mapping = {
     pg.K_g: DrawMode.SET_GOAL,
 }
 
-screen_dim = ScreenDim(500, 500)
+screen_dim = ScreenDim(1500, 1500)
 lattice_info = LatticeInfo(screen_dim, 10)
 
 clock = pg.time.Clock()
@@ -28,6 +28,19 @@ mouse_pressed = False
 lattice = Lattice(screen, lattice_info)
 lattice.draw()
 
+'''
+Event mapping:
+
+C - Clear Lattice
+M - Generate maze (using randomized DFS)
+E - Erases wall nodes (Have to hold down key when clicking mouse)
+O - Sets origin node (Have to hold down key when clicking mouse, can only set 1 origin)
+G - Sets goal node (Have to hold down key when clicking mouse, can only set 1 goal)
+R - Generate random walls
+L - Begin Game of Life simulation
+D - Begin DFS visualization (only starts if Origin and Goal are both set)
+B - Begin BFS visualization (only starts if Origin and Goal are both set)
+'''
 
 while True:
     for event in pg.event.get():
@@ -51,6 +64,8 @@ while True:
             elif event.key == pg.K_b and lattice.get_goal() and lattice.get_origin():
                 path_found = lattice.bfs()
                 print('Path found') if path_found else print('Path not found!')
+            elif event.key == pg.K_l:
+                lattice.game_of_life()
             else:
                 lattice.set_draw_mode(
                     event_key_to_draw_mode_mapping.get(
