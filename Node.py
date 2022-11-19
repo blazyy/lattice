@@ -12,8 +12,7 @@ node_colours = {
     NodeState.VACANT: 'white',
     NodeState.ORIGIN: 'green',
     NodeState.GOAL: 'red',
-    NodeState.VISITED: 'blue',
-    NodeState.VISITED_MAZE: 'white',
+    NodeState.VISITED: '#054a29',
     NodeState.PATH: 'yellow',
 }
 
@@ -36,6 +35,7 @@ class Node:
         self.state = state
         self.pos = pos
         self.predecessor = None
+        self.already_rendered = False
 
     def get_state(self) -> NodeState:
         '''
@@ -73,6 +73,14 @@ class Node:
         '''
 
         return self.predecessor
+
+    # def set_rendered(self) -> None:
+    #     '''
+    #     Sets self.already_rendered to True. Used to aniamted color gradient transitions in node
+    #     in the consequent game loops after a node has initially been set to a certain state.
+    #     '''
+
+    #     self.already_rendered = True
 
     def reset(self) -> None:
         '''

@@ -17,11 +17,11 @@ event_key_to_draw_mode_mapping = {
 }
 
 screen_dim = ScreenDim(1500, 1500)
-lattice_info = LatticeInfo(screen_dim, 10)
+lattice_info = LatticeInfo(screen_dim, 20)
 
 clock = pg.time.Clock()
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
-screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h))
+screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h), pg.DOUBLEBUF)
 
 mouse_pressed = False
 
@@ -40,6 +40,7 @@ R - Generate random walls
 L - Begin Game of Life simulation
 D - Begin DFS visualization (only starts if Origin and Goal are both set)
 B - Begin BFS visualization (only starts if Origin and Goal are both set)
+K - Begin Dijkstra's Pathfinding visualization
 '''
 
 while True:
@@ -64,6 +65,9 @@ while True:
             elif event.key == pg.K_b and lattice.get_goal() and lattice.get_origin():
                 path_found = lattice.bfs()
                 print('Path found') if path_found else print('Path not found!')
+            elif event.key == pg.K_k and lattice.get_goal() and lattice.get_origin():
+                path_found = lattice.dijkstra()
+                print('Path found') if path_found else print('Path not found!')
             elif event.key == pg.K_l:
                 lattice.game_of_life()
             else:
@@ -83,4 +87,4 @@ while True:
             pos = Pos(r, c)
             lattice.change_node_state_on_user_input(pos)
 
-    clock.tick(60)
+    # clock.tick(60)
