@@ -21,7 +21,9 @@ lattice_info = LatticeInfo(screen_dim, 20)
 
 clock = pg.time.Clock()
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
-screen = pg.display.set_mode((lattice_info.screen_dim.w, lattice_info.screen_dim.h), pg.DOUBLEBUF)
+screen = pg.display.set_mode(
+    (lattice_info.screen_dim.w, lattice_info.screen_dim.h), pg.DOUBLEBUF
+)
 
 mouse_pressed = False
 
@@ -57,16 +59,20 @@ while True:
                 lattice.clear()
             if event.key == pg.K_m:
                 lattice.generate_maze()
+                lattice.handle_end_transitions()
             if event.key == pg.K_r:
                 lattice.randomize(0.25)
             elif event.key == pg.K_d and lattice.get_goal() and lattice.get_origin():
                 path_found = lattice.dfs()
+                lattice.handle_end_transitions()
                 print('Path found') if path_found else print('Path not found!')
             elif event.key == pg.K_b and lattice.get_goal() and lattice.get_origin():
                 path_found = lattice.bfs()
+                lattice.handle_end_transitions()
                 print('Path found') if path_found else print('Path not found!')
             elif event.key == pg.K_k and lattice.get_goal() and lattice.get_origin():
                 path_found = lattice.dijkstra()
+                lattice.handle_end_transitions()
                 print('Path found') if path_found else print('Path not found!')
             elif event.key == pg.K_l:
                 lattice.game_of_life()

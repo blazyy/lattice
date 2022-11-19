@@ -5,9 +5,7 @@ from typing import Dict, List, Tuple, Optional
 from collections import namedtuple, defaultdict
 
 from enums import DrawMode, NodeState
-from Node import Node, node_colours, Pos
-
-NUM_COLOURS_IN_TRANSITION = 15
+from Node import Node, NUM_COLOURS_IN_TRANSITION, Pos
 
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
 LatticeDim = namedtuple('LatticeDim', ['nrows', 'ncols'])
@@ -43,9 +41,6 @@ class Lattice:
         self.previously_rendered_nodes = (
             {}
         )  # Contains nodes which have been rendered since beginning of the animation. Used to enable gradient animation on nodes as visualization progresses
-        self.colours = list(
-            Color('#5BBA6F').range_to(Color('#054a29'), NUM_COLOURS_IN_TRANSITION)
-        )
 
         for r in range(self.nrows):
             row = []
@@ -114,27 +109,14 @@ class Lattice:
         x, y = pos.r * self.info.node_size, pos.c * self.info.node_size
         return (x, y)
 
-    def get_appropriate_transition_colour(self, node: Node) -> str:
-        '''
-        If a node has already been rendered on the screen, on subsequent game loops, colour will need to
-        fade into a colour of a lower hue. This function returns the appropriate colour depending on
-        how many loops has passed since a node initially got rendered.
-        '''
-
-        # colours = ['#137547', '#2A9134', '#3FA34D', '#5BBA6F']
-        return self.colours[self.previously_rendered_nodes[node]].hex
-
     def get_rect_from_node(self, node: Node) -> pg.rect.Rect:
         '''
         Gets a pygame Rect object from a given node.
         '''
 
         x, y = self.get_node_coords(node)
-        colour = None
-        if node in self.previously_rendered_nodes:
-            colour = self.get_appropriate_transition_colour(node)
-        else:
-            colour = node_colours[node.get_state()]
+        render_number = self.previously_rendered_nodes.get(node, None)
+        colour = node.get_colour(render_number)
         rect = pg.draw.rect(
             self.pg_screen,
             colour,
@@ -165,23 +147,31 @@ class Lattice:
             node_rects.append(self.get_rect_from_node(node))
         pg.display.update(node_rects)
 
-    def handle_node_rendering(self, latest_rendered_node: Node):
+    def handle_node_rendering(self, latest_rendered_node: Optional[Node] = None):
         '''
-        Handles rendering a node once it's state has been updated. Also handles the
-        colour transitions for all the previously generated nodes.
+        Handles rendering a node once it's state has been updated. Also handles the colour transitions for all
+        the previously generated nodes. If the latest rendered node is not provided, it means the function doesn't
+        handle newer nodes but transitions the colours of already rendered nodes to the last colour so that all node's
+        of a particular state change to be the same colour.
         '''
 
         # Nodes which have already reached the last colour in the transition phase, after which they don't need to be updated, so they can be removed from self.previously_rendered_nodes
         last_state_nodes = []
-        self.previously_rendered_nodes[
-            latest_rendered_node
-        ] = 0  # Set to 0 here, but will be set to 1 in the for loop below. Every node in this dictionary will be added in this line, one at a time each subsequent render.
+        if latest_rendered_node:
+            self.previously_rendered_nodes[
+                latest_rendered_node
+            ] = 0  # Set to 0 here, but will be set to 1 in the for loop below. Every node in this dictionary will be added in this line, one at a time each subsequent render.
         nodes_to_update = []  # Nodes to update using pg.display.update()
 
         # Loops through all nodes that were rendered before current render, and if the number of renders a previously rendered node has been through is less
         # than NUM_COLOURS_IN_TRANSITION, re-render node. If node has been through enough renders, we stop updating it, which is what last_state_nodes contains.
         for node in self.previously_rendered_nodes:
-            if node.get_state() == NodeState.VISITED:
+            if node.get_state() in [
+                NodeState.VISITED,
+                NodeState.WALL,
+                NodeState.PATH,
+                NodeState.VACANT,
+            ]:
                 self.previously_rendered_nodes[node] = min(
                     self.previously_rendered_nodes[node] + 1,
                     NUM_COLOURS_IN_TRANSITION - 1,
@@ -204,6 +194,15 @@ class Lattice:
 
         node.set_state(new_state)
         self.handle_node_rendering(node)
+
+    def handle_end_transitions(self) -> None:
+        '''
+        After a visualization finishes, node's colour transitions need to be completed, i.e. all nodes of a certain
+        NodeState should end on the same colour.
+        '''
+
+        while self.previously_rendered_nodes:
+            self.handle_node_rendering()
 
     def change_node_state_on_user_input(self, pos: Pos) -> None:
         '''

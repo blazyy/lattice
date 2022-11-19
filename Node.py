@@ -1,19 +1,52 @@
 from __future__ import (
     annotations,
 )  # Used for type hinting to set type of class method to class itself, i.e. in set_predecessor() function below.
+from colour import Color
 from collections import namedtuple
 
 from enums import NodeState
 from typing import Optional
 
+NUM_COLOURS_IN_TRANSITION = 50
 
 node_colours = {
-    NodeState.WALL: 'black',
-    NodeState.VACANT: 'white',
-    NodeState.ORIGIN: 'green',
-    NodeState.GOAL: 'red',
-    NodeState.VISITED: '#054a29',
-    NodeState.PATH: 'yellow',
+    # NodeState.WALL: ['black'],
+    NodeState.WALL: list(
+        map(
+            lambda color: color.hex,
+            list(
+                Color('#000500').range_to(Color('#231F20'), NUM_COLOURS_IN_TRANSITION)
+            ),
+        )
+    ),
+    NodeState.VACANT: list(
+        map(
+            lambda color: color.hex,
+            list(Color('#FAF0CA').range_to(Color('white'), NUM_COLOURS_IN_TRANSITION)),
+        )
+    ),
+    # NodeState.VACANT: ['white'],
+    NodeState.ORIGIN: ['green'],
+    NodeState.GOAL: ['red'],
+    NodeState.VISITED: ['yellow']
+    + list(
+        map(
+            lambda color: color.hex,
+            list(
+                Color('#539987').range_to(Color('#4DFFF3'), NUM_COLOURS_IN_TRANSITION)
+            ),
+        )
+    ),
+    # NodeState.VISITED: ['yellow'] + list(map(lambda color: color.hex, list(Color('#77BFA3').range_to(Color('#EDEEC9'), NUM_COLOURS_IN_TRANSITION)))),
+    NodeState.PATH: list(
+        map(
+            lambda color: color.hex,
+            list(
+                Color('#EE964B').range_to(Color('#F4D35E'), NUM_COLOURS_IN_TRANSITION)
+            ),
+        )
+    ),
+    # NodeState.PATH: ['yellow'],
 }
 
 Pos = namedtuple('Pos', ['r', 'c'])
@@ -74,13 +107,15 @@ class Node:
 
         return self.predecessor
 
-    # def set_rendered(self) -> None:
-    #     '''
-    #     Sets self.already_rendered to True. Used to aniamted color gradient transitions in node
-    #     in the consequent game loops after a node has initially been set to a certain state.
-    #     '''
+    def get_colour(self, render_number: int) -> str:
+        '''
+        Given the number which represents it's nth render, returns the appropriate colour.
+        render_number exists in the range (1, NUM_COLOURS_IN_TRANSITION - 1).
+        '''
 
-    #     self.already_rendered = True
+        if render_number is None:
+            return node_colours[self.state][0]
+        return node_colours[self.state][render_number - 1]
 
     def reset(self) -> None:
         '''
