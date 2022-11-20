@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Optional
 from collections import namedtuple, defaultdict
 
 from enums import DrawMode, NodeState
-from Node import Node, NUM_COLOURS_IN_TRANSITION, Pos
+from Node import Node, NUM_COLOURS_IN_TRANSITION, Pos, node_colour_ranges
 
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
 LatticeDim = namedtuple('LatticeDim', ['nrows', 'ncols'])
@@ -18,6 +18,12 @@ draw_mode_to_node_state_mapping: DrawModeToNodeStateMapping = {
     DrawMode.SET_VACANT: NodeState.VACANT,
     DrawMode.SET_GOAL: NodeState.GOAL,
 }
+
+NODE_STATES_WITH_TRANSITION_COLOURS = [
+    node_state
+    for node_state in node_colour_ranges
+    if len(node_colour_ranges[node_state]) > 1
+]
 
 
 class Lattice:
@@ -166,12 +172,8 @@ class Lattice:
         # Loops through all nodes that were rendered before current render, and if the number of renders a previously rendered node has been through is less
         # than NUM_COLOURS_IN_TRANSITION, re-render node. If node has been through enough renders, we stop updating it, which is what last_state_nodes contains.
         for node in self.previously_rendered_nodes:
-            if node.get_state() in [
-                NodeState.VISITED,
-                NodeState.WALL,
-                NodeState.PATH,
-                NodeState.VACANT,
-            ]:
+            # Make sure the NodeStates in the list below correspond to NodeStates which have more than one colour in node_colours (in Node.py)
+            if node.get_state() in NODE_STATES_WITH_TRANSITION_COLOURS:
                 self.previously_rendered_nodes[node] = min(
                     self.previously_rendered_nodes[node] + 1,
                     NUM_COLOURS_IN_TRANSITION - 1,
@@ -396,6 +398,7 @@ class Lattice:
         Fills the entire grid with walls, i.e. sets all nodes to the state NodeState.WALL.
         '''
 
+        self.clear()
         self.origin = None
         self.goal = None
         for r in range(self.nrows):
@@ -576,6 +579,7 @@ class Lattice:
 
         self.origin = None
         self.goal = None
+        self.previously_rendered_nodes = {}
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
