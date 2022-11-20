@@ -1,10 +1,11 @@
 import random
 import pygame as pg
+from colour import Color
 from typing import Dict, List, Tuple, Optional
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 from enums import DrawMode, NodeState
-from Node import Node, node_colours, Pos
+from Node import Node, NUM_COLOURS_IN_TRANSITION, Pos, node_colour_ranges
 
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
 LatticeDim = namedtuple('LatticeDim', ['nrows', 'ncols'])
@@ -17,6 +18,12 @@ draw_mode_to_node_state_mapping: DrawModeToNodeStateMapping = {
     DrawMode.SET_VACANT: NodeState.VACANT,
     DrawMode.SET_GOAL: NodeState.GOAL,
 }
+
+NODE_STATES_WITH_TRANSITION_COLOURS = [
+    node_state
+    for node_state in node_colour_ranges
+    if len(node_colour_ranges[node_state]) > 1
+]
 
 
 class Lattice:
@@ -37,6 +44,9 @@ class Lattice:
         self.origin = None
         self.goal = None
         self.pg_screen = pg_screen
+        self.previously_rendered_nodes = (
+            {}
+        )  # Contains nodes which have been rendered since beginning of the animation. Used to enable gradient animation on nodes as visualization progresses
 
         for r in range(self.nrows):
             row = []
@@ -111,9 +121,11 @@ class Lattice:
         '''
 
         x, y = self.get_node_coords(node)
+        render_number = self.previously_rendered_nodes.get(node, None)
+        colour = node.get_colour(render_number)
         rect = pg.draw.rect(
             self.pg_screen,
-            node_colours[node.get_state()],
+            colour,
             pg.Rect(x, y, self.info.node_size, self.info.node_size),
         )
         return rect
@@ -131,13 +143,51 @@ class Lattice:
                 new_rects.append(new_rect)
         pg.display.update(new_rects)  # type: ignore
 
-    def render_node(self, node: Node) -> None:
+    def render_nodes(self, nodes: List[Node]) -> None:
         '''
-        Renders the given node.
+        Renders the given nodes. Leaves rest of the screen untouched (i.e. same as the last render)
         '''
 
-        node_rect = self.get_rect_from_node(node)
-        pg.display.update(node_rect)
+        node_rects = []
+        for node in nodes:
+            node_rects.append(self.get_rect_from_node(node))
+        pg.display.update(node_rects)
+
+    def handle_node_rendering(self, latest_rendered_node: Optional[Node] = None):
+        '''
+        Handles rendering a node once it's state has been updated. Also handles the colour transitions for all
+        the previously generated nodes. If the latest rendered node is not provided, it means the function doesn't
+        handle newer nodes but transitions the colours of already rendered nodes to the last colour so that all node's
+        of a particular state change to be the same colour.
+        '''
+
+        # Nodes which have already reached the last colour in the transition phase, after which they don't need to be updated, so they can be removed from self.previously_rendered_nodes
+        last_state_nodes = []
+        if latest_rendered_node:
+            self.previously_rendered_nodes[
+                latest_rendered_node
+            ] = 0  # Set to 0 here, but will be set to 1 in the for loop below. Every node in this dictionary will be added in this line, one at a time each subsequent render.
+        nodes_to_update = []  # Nodes to update using pg.display.update()
+
+        # Loops through all nodes that were rendered before current render, and if the number of renders a previously rendered node has been through is less
+        # than NUM_COLOURS_IN_TRANSITION, re-render node. If node has been through enough renders, we stop updating it, which is what last_state_nodes contains.
+        for node in self.previously_rendered_nodes:
+            # Make sure the NodeStates in the list below correspond to NodeStates which have more than one colour in node_colours (in Node.py)
+            if node.get_state() in NODE_STATES_WITH_TRANSITION_COLOURS:
+                self.previously_rendered_nodes[node] = min(
+                    self.previously_rendered_nodes[node] + 1,
+                    NUM_COLOURS_IN_TRANSITION - 1,
+                )
+            if self.previously_rendered_nodes[node] >= NUM_COLOURS_IN_TRANSITION - 1:
+                last_state_nodes.append(node)
+            else:
+                nodes_to_update.append(node)
+
+        # Separate for loop because we can't delete dictionary keys while iterating through the dictionary
+        for node in last_state_nodes:
+            self.previously_rendered_nodes.pop(node, None)
+
+        self.render_nodes(nodes_to_update)
 
     def update_node_state_and_render(self, node: Node, new_state: NodeState) -> None:
         '''
@@ -145,7 +195,16 @@ class Lattice:
         '''
 
         node.set_state(new_state)
-        self.render_node(node)
+        self.handle_node_rendering(node)
+
+    def handle_end_transitions(self) -> None:
+        '''
+        After a visualization finishes, node's colour transitions need to be completed, i.e. all nodes of a certain
+        NodeState should end on the same colour.
+        '''
+
+        while self.previously_rendered_nodes:
+            self.handle_node_rendering()
 
     def change_node_state_on_user_input(self, pos: Pos) -> None:
         '''
@@ -280,6 +339,43 @@ class Lattice:
                             queue.append(neighbour)
         return False
 
+    def dijkstra(self) -> bool:
+        '''
+        Finds a path from origin to goal. Currently, squares on a grid cannot be assigned weights (they can, but it's hard to visualize).
+        Because of this, weights between nodes are all by default to 1.
+        '''
+
+        dist = defaultdict(lambda: float('inf'))
+        dist[self.origin] = 0
+        node = self.origin
+        while True:
+            neighbours = self.get_neighbours(node)
+            unvisited_neighbours = list(
+                filter(
+                    lambda n: n.get_state()
+                    not in [NodeState.VISITED, NodeState.ORIGIN, NodeState.WALL],
+                    neighbours,
+                )
+            )
+            for neighbour in unvisited_neighbours:
+                if (
+                    dist[node] + 1 < dist[neighbour]
+                ):  # If current distance to a node is smaller than any previous possible distance, update it
+                    dist[neighbour] = dist[node] + 1
+                    neighbour.set_predecessor(node)
+                    if neighbour == self.goal:
+                        print('Path found!')
+                        self.display_path_to_origin(neighbour)
+                        return True
+            if node.get_state() != NodeState.ORIGIN:
+                self.update_node_state_and_render(node, NodeState.VISITED)
+            smallest_path, smallest_path_node = float('inf'), None
+            for neighbour in unvisited_neighbours:
+                if dist[neighbour] < smallest_path:
+                    smallest_path = dist[neighbour]
+                    smallest_path_node = neighbour
+            node = smallest_path_node
+
     def randomize(self, density: float) -> None:
         '''
         Randomly sets a node to a wall, depending on the density amount specified. Think of
@@ -302,6 +398,7 @@ class Lattice:
         Fills the entire grid with walls, i.e. sets all nodes to the state NodeState.WALL.
         '''
 
+        self.clear()
         self.origin = None
         self.goal = None
         for r in range(self.nrows):
@@ -398,54 +495,17 @@ class Lattice:
                 stack.append(rand_unvisited_neighbour)
         self.draw()
 
-    def get_num_live_neighbours(self, node: Node) -> int:
+    def get_num_live_neighbours(self, neighbour_indices: List[Tuple[int, int]]) -> int:
         '''
-        From the eight neighbours for a particular cell, returns the number of cells which have the state NodeState.WALL.
+        From all the neighbours of a particular cell, returns the number of cells which have the state NodeState.WALL.
         '''
-
-        positions = [
-            [0, 1],
-            [0, -1],
-            [1, -1],
-            [-1, 1],
-            [1, 1],
-            [-1, -1],
-            [1, 0],
-            [-1, 0],
-        ]
 
         num_live_neighbours = 0
-        node_pos = node.get_pos()
-        r, c = node_pos.r, node_pos.c
-        for position in positions:
-            new_r = r + position[0]
-            new_c = c + position[1]
-            if (
-                new_r >= 0
-                and new_r < self.nrows
-                and new_c >= 0
-                and new_c < self.ncols
-                and self.values[new_r][new_c].get_state() == NodeState.WALL
-            ):
+        for neighbour_index in neighbour_indices:
+            r, c = neighbour_index
+            if self.values[r][c].get_state() == NodeState.WALL:
                 num_live_neighbours += 1
         return num_live_neighbours
-
-    def overwrite(self, new_values: List[List[Node]]) -> None:
-        '''
-        Given a new 2D array of nodes, completely overwrites the existing lattice with new values.
-        '''
-
-        self.values = new_values
-
-    def render_nodes(self, nodes: List[Node]) -> None:
-        '''
-        Renders the given nodes. Leaves rest of the screen untouched (i.e. same as the last render)
-        '''
-
-        node_rects = []
-        for node in nodes:
-            node_rects.append(self.get_rect_from_node(node))
-        pg.display.update(node_rects)
 
     def game_of_life(self) -> None:
         '''
@@ -459,6 +519,33 @@ class Lattice:
         4) Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
         '''
 
+        # Pre-calculating neighbour indices, so that it isn't done every generation. Sure, uses a lot more storage but that isn't a bottleneck.
+        positions = [
+            [0, 1],
+            [0, -1],
+            [1, -1],
+            [-1, 1],
+            [1, 1],
+            [-1, -1],
+            [1, 0],
+            [-1, 0],
+        ]
+        all_neighbour_indices = {}
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                neighbour_indices = []
+                for position in positions:
+                    new_r = r + position[0]
+                    new_c = c + position[1]
+                    if (
+                        new_r >= 0
+                        and new_r < self.nrows
+                        and new_c >= 0
+                        and new_c < self.ncols
+                    ):
+                        neighbour_indices.append([new_r, new_c])
+                all_neighbour_indices[self.values[r][c]] = neighbour_indices
+
         while True:
             batch_update_list = (
                 []
@@ -467,12 +554,15 @@ class Lattice:
             for r in range(self.nrows):
                 for c in range(self.ncols):
                     node = self.get_node(r, c)
+                    neighbour_indices = all_neighbour_indices[node]
+                    num_live_neighbours = self.get_num_live_neighbours(
+                        neighbour_indices
+                    )
                     is_node_alive = node.get_state() == NodeState.WALL
-                    num_live_neighbours = self.get_num_live_neighbours(node)
                     if is_node_alive:
                         if num_live_neighbours < 2 or num_live_neighbours > 3:
                             batch_update_list.append([node, NodeState.VACANT])
-                    elif num_live_neighbours == 3:
+                    elif not is_node_alive and num_live_neighbours == 3:
                         batch_update_list.append([node, NodeState.WALL])
             nodes_to_update = []
             for item in batch_update_list:
@@ -489,6 +579,7 @@ class Lattice:
 
         self.origin = None
         self.goal = None
+        self.previously_rendered_nodes = {}
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
