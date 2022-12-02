@@ -15,3 +15,9 @@ class NodeState(Enum):
     GOAL = 3
     VISITED = 4
     PATH = 5
+
+
+class PathfindingOption(Enum):
+    BFS = 1
+    DFS = 2
+    DIJKSTRA = 3

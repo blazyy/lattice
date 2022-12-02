@@ -1,11 +1,9 @@
-import heapq
 import random
 import pygame as pg
-from colour import Color
 from typing import Dict, List, Tuple, Optional
 from collections import namedtuple, defaultdict
 
-from enums import DrawMode, NodeState
+from enums import DrawMode, NodeState, PathfindingOption
 from Node import Node, NUM_COLOURS_IN_TRANSITION, Pos, node_colour_ranges
 
 ScreenDim = namedtuple('ScreenDim', ['w', 'h'])
@@ -176,7 +174,9 @@ class Lattice:
             if node.get_state() in NODE_STATES_WITH_TRANSITION_COLOURS:
                 self.previously_rendered_nodes[node] += 1
             else:
-                last_state_nodes.append(node) # If a node's state doesn't need a colour transition, it has finished rendering and therefore should not be rendered anymore.
+                last_state_nodes.append(
+                    node
+                )  # If a node's state doesn't need a colour transition, it has finished rendering and therefore should not be rendered anymore.
             if self.previously_rendered_nodes[node] == NUM_COLOURS_IN_TRANSITION - 1:
                 last_state_nodes.append(node)
             else:
@@ -518,6 +518,18 @@ class Lattice:
                 num_live_neighbours += 1
         return num_live_neighbours
 
+    def clear_certain_state_nodes(self, states_to_clear: List[NodeState]) -> None:
+        '''
+        Resets nodes with given state(s) to NodeState.VACANT.
+        '''
+
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                node = self.values[r][c]
+                if node.get_state() in states_to_clear:
+                    node.set_state(NodeState.VACANT)
+        self.draw()
+
     def game_of_life(self) -> None:
         '''
         Starts an emulation of Conway's Game of Life. NodeState.WALL is considered a live cell, NodeState.VACANT
@@ -529,6 +541,12 @@ class Lattice:
         3) Any live cell with more than three live neighbours dies, as if by overpopulation.
         4) Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
         '''
+
+        # 2 lines immediately below are in case someone starts a visualization after doing a pathfinding visualization
+        self.origin, self.goal = None, None
+        self.clear_certain_state_nodes(
+            [NodeState.VISITED, NodeState.PATH, NodeState.ORIGIN, NodeState.GOAL]
+        )
 
         # Pre-calculating neighbour indices, so that it isn't done every generation. Sure, uses a lot more storage but that isn't a bottleneck.
         positions = [
@@ -588,10 +606,21 @@ class Lattice:
         and goal nodes to None.
         '''
 
-        self.origin = None
-        self.goal = None
+        self.origin, self.goal = None, None
         self.previously_rendered_nodes = {}
         for r in range(self.nrows):
             for c in range(self.ncols):
                 self.values[r][c].reset()
         self.draw()
+
+    def visualize(self, option: PathfindingOption):
+        path_found = None
+        self.clear_certain_state_nodes([NodeState.VISITED, NodeState.PATH])
+        if option == PathfindingOption.DFS:
+            path_found = self.dfs()
+        elif option == PathfindingOption.BFS:
+            path_found = self.bfs()
+        elif option == PathfindingOption.DIJKSTRA:
+            path_found = self.dijkstra()
+        self.handle_end_transitions()
+        print('Path found') if path_found else print('Path not found!')

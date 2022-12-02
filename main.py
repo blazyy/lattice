@@ -4,7 +4,7 @@ import pygame as pg
 pg.init()
 
 from typing import Dict
-from enums import DrawMode
+from enums import DrawMode, PathfindingOption
 from Node import Pos
 from Lattice import Lattice, LatticeInfo, ScreenDim
 
@@ -65,17 +65,11 @@ while True:
             if event.key == pg.K_r:
                 lattice.randomize(0.25)
             elif event.key == pg.K_d and lattice.get_goal() and lattice.get_origin():
-                path_found = lattice.dfs()
-                lattice.handle_end_transitions()
-                print('Path found') if path_found else print('Path not found!')
+                lattice.visualize(PathfindingOption.DFS)
             elif event.key == pg.K_b and lattice.get_goal() and lattice.get_origin():
-                path_found = lattice.bfs()
-                lattice.handle_end_transitions()
-                print('Path found') if path_found else print('Path not found!')
+                lattice.visualize(PathfindingOption.BFS)
             elif event.key == pg.K_k and lattice.get_goal() and lattice.get_origin():
-                path_found = lattice.dijkstra()
-                lattice.handle_end_transitions()
-                print('Path found') if path_found else print('Path not found!')
+                lattice.visualize(PathfindingOption.DIJKSTRA)
             elif event.key == pg.K_l:
                 lattice.game_of_life()
             else:
