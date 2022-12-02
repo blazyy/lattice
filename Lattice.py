@@ -163,30 +163,28 @@ class Lattice:
         '''
 
         # Nodes which have already reached the last colour in the transition phase, after which they don't need to be updated, so they can be removed from self.previously_rendered_nodes
-        last_state_nodes = []
         if latest_rendered_node:
             self.previously_rendered_nodes[
                 latest_rendered_node
             ] = 0  # Set to 0 here, but will be set to 1 in the for loop below. Every node in this dictionary will be added in this line, one at a time each subsequent render.
         nodes_to_update = []  # Nodes to update using pg.display.update()
-
+        last_state_nodes = []
         # Loops through all nodes that were rendered before current render, and if the number of renders a previously rendered node has been through is less
         # than NUM_COLOURS_IN_TRANSITION, re-render node. If node has been through enough renders, we stop updating it, which is what last_state_nodes contains.
         for node in self.previously_rendered_nodes:
             # Make sure the NodeStates in the list below correspond to NodeStates which have more than one colour in node_colours (in Node.py)
             if node.get_state() in NODE_STATES_WITH_TRANSITION_COLOURS:
-                self.previously_rendered_nodes[node] = min(
-                    self.previously_rendered_nodes[node] + 1,
-                    NUM_COLOURS_IN_TRANSITION - 1,
-                )
-            if self.previously_rendered_nodes[node] >= NUM_COLOURS_IN_TRANSITION - 1:
+                self.previously_rendered_nodes[node] += 1
+            else:
+                last_state_nodes.append(node) # If a node's state doesn't need a colour transition, it has finished rendering and therefore should not be rendered anymore.
+            if self.previously_rendered_nodes[node] == NUM_COLOURS_IN_TRANSITION - 1:
                 last_state_nodes.append(node)
             else:
                 nodes_to_update.append(node)
 
         # Separate for loop because we can't delete dictionary keys while iterating through the dictionary
         for node in last_state_nodes:
-            self.previously_rendered_nodes.pop(node, None)
+            self.previously_rendered_nodes.pop(node)
 
         self.render_nodes(nodes_to_update)
 
@@ -204,7 +202,7 @@ class Lattice:
         NodeState should end on the same colour.
         '''
 
-        while self.previously_rendered_nodes:
+        while len(self.previously_rendered_nodes):
             self.handle_node_rendering()
 
     def change_node_state_on_user_input(self, pos: Pos) -> None:
@@ -373,7 +371,6 @@ class Lattice:
                         node
                     )  # Whenever we visit a node, mark the predecessor so that when a path is found, we can backtrack back to origin.
                 if neighbour == self.goal:
-                    print('Path found!')
                     self.display_path_to_origin(neighbour)
                     return True
             # "Priority Queue"

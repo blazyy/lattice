@@ -16,7 +16,7 @@ event_key_to_draw_mode_mapping = {
     pg.K_g: DrawMode.SET_GOAL,
 }
 
-NODE_SIZE = 20
+NODE_SIZE = 15
 SCREEN_SIDE_LEN = 1500
 
 screen_dim = ScreenDim(SCREEN_SIDE_LEN, SCREEN_SIDE_LEN)
