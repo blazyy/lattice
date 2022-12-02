@@ -1,3 +1,4 @@
+import heapq
 import random
 import pygame as pg
 from colour import Color
@@ -343,12 +344,18 @@ class Lattice:
         '''
         Finds a path from origin to goal. Currently, squares on a grid cannot be assigned weights (they can, but it's hard to visualize).
         Because of this, weights between nodes are all by default to 1.
+
+        This implementation, instead of using a priority queue, uses a mapping (defauldict with default distance of infinity) of a node to its distance.
+        A Node object's state is internal, so we do not need to check externally whether or node a node has been visited through the use of a typical priority queue.
+        We can just check if a node's state has been marked as visited, compared to the typical implementation where we check if it exists in a priority queue.
         '''
 
         dist = defaultdict(lambda: float('inf'))
         dist[self.origin] = 0
         node = self.origin
         while True:
+            if node.get_state() != NodeState.ORIGIN:
+                self.update_node_state_and_render(node, NodeState.VISITED)
             neighbours = self.get_neighbours(node)
             unvisited_neighbours = list(
                 filter(
@@ -360,21 +367,28 @@ class Lattice:
             for neighbour in unvisited_neighbours:
                 if (
                     dist[node] + 1 < dist[neighbour]
-                ):  # If current distance to a node is smaller than any previous possible distance, update it
+                ):  # If current distance to a node is smaller than any previous possible distance, update it. Every node is only 1 node away from other nodes due to the fact that this is a nxn grid with no weights.
                     dist[neighbour] = dist[node] + 1
-                    neighbour.set_predecessor(node)
-                    if neighbour == self.goal:
-                        print('Path found!')
-                        self.display_path_to_origin(neighbour)
-                        return True
-            if node.get_state() != NodeState.ORIGIN:
-                self.update_node_state_and_render(node, NodeState.VISITED)
-            smallest_path, smallest_path_node = float('inf'), None
-            for neighbour in unvisited_neighbours:
-                if dist[neighbour] < smallest_path:
-                    smallest_path = dist[neighbour]
-                    smallest_path_node = neighbour
+                    neighbour.set_predecessor(
+                        node
+                    )  # Whenever we visit a node, mark the predecessor so that when a path is found, we can backtrack back to origin.
+                if neighbour == self.goal:
+                    print('Path found!')
+                    self.display_path_to_origin(neighbour)
+                    return True
+            # "Priority Queue"
+            smallest_path_dist, smallest_path_node = float('inf'), None
+            for node in dist.keys():
+                if dist[node] < smallest_path_dist and node.get_state() not in [
+                    NodeState.VISITED,
+                    NodeState.ORIGIN,
+                    NodeState.WALL,
+                ]:
+                    smallest_path_dist = dist[node]
+                    smallest_path_node = node
             node = smallest_path_node
+            if not node:
+                break
 
     def randomize(self, density: float) -> None:
         '''

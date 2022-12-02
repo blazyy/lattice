@@ -10,7 +10,7 @@ from typing import Optional
 Pos = namedtuple('Pos', ['r', 'c'])
 
 NUM_COLOURS_IN_TRANSITION = (
-    250  # Make sure this is an odd number lol, else program might go kaboom
+    999  # Make sure this is an odd number lol, else program might go kaboom
 )
 
 node_colour_ranges = {
@@ -18,17 +18,22 @@ node_colour_ranges = {
     NodeState.VACANT: ['#FAF0CA'],
     NodeState.ORIGIN: ['green'],
     NodeState.GOAL: ['red'],
+    # NodeState.VISITED: [
+    #     'fbf8cc',
+    #     'fde4cf',
+    #     'ffcfd2',
+    #     'f1c0e8',
+    #     'cfbaf0',
+    #     'a3c4f3',
+    #     '90dbf4',
+    #     '8eecf5',
+    #     '98f5e1',
+    #     'b9fbc0',
+    # ],
     NodeState.VISITED: [
-        'fbf8cc',
-        'fde4cf',
-        'ffcfd2',
-        'f1c0e8',
-        'cfbaf0',
-        'a3c4f3',
-        '90dbf4',
-        '8eecf5',
-        '98f5e1',
-        'b9fbc0',
+        '16DB65',
+        '058C42',
+        '04471C',
     ],
     NodeState.PATH: ['#ffd100', '#ffee32'],
 }

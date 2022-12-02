@@ -16,8 +16,11 @@ event_key_to_draw_mode_mapping = {
     pg.K_g: DrawMode.SET_GOAL,
 }
 
-screen_dim = ScreenDim(1500, 1500)
-lattice_info = LatticeInfo(screen_dim, 20)
+NODE_SIZE = 20
+SCREEN_SIDE_LEN = 1500
+
+screen_dim = ScreenDim(SCREEN_SIDE_LEN, SCREEN_SIDE_LEN)
+lattice_info = LatticeInfo(screen_dim, NODE_SIZE)
 
 clock = pg.time.Clock()
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
@@ -59,7 +62,6 @@ while True:
                 lattice.clear()
             if event.key == pg.K_m:
                 lattice.generate_maze()
-                lattice.handle_end_transitions()
             if event.key == pg.K_r:
                 lattice.randomize(0.25)
             elif event.key == pg.K_d and lattice.get_goal() and lattice.get_origin():
