@@ -632,7 +632,9 @@ class Lattice:
                         neighbour_indices.append([new_r, new_c])
                 all_neighbour_indices[self.values[r][c]] = neighbour_indices
 
-        while True:
+        prev_nodes_to_update = []  # Checks if evolution has stopped.
+        evolution_stopped = False
+        while not evolution_stopped:
             batch_update_list = (
                 []
             )  # Since each generation is a pure function of the preceding one, we have to update the node states only after going through all of them once.
@@ -655,6 +657,15 @@ class Lattice:
                 node, new_state = item
                 node.set_state(new_state)
                 nodes_to_update.append(node)
+
+            # Takes care of termination state. I wrote this in a jiffy and I don't know how it works and I'm too lazy to try understanding. But hey, it works. So I'm not touching it.
+            for item in prev_nodes_to_update:
+                if nodes_to_update == item:
+                    evolution_stopped = True
+            if len(prev_nodes_to_update) == 1:
+                prev_nodes_to_update.pop(0)
+            prev_nodes_to_update.append(nodes_to_update)
+
             self.render_nodes(nodes_to_update)
 
     def clear(self) -> None:
@@ -673,6 +684,7 @@ class Lattice:
     def visualize(self, option: PathfindingOption):
         if self.get_goal() and self.get_origin():
             path_found = None
+            self.previously_rendered_nodes = {}
             self.clear_certain_state_nodes([NodeState.VISITED, NodeState.PATH])
             if option == PathfindingOption.DFS:
                 path_found = self.dfs()
@@ -682,7 +694,12 @@ class Lattice:
                 path_found = self.dijkstra()
             elif option == PathfindingOption.A_STAR:
                 path_found = self.a_star()
-            self.handle_end_transitions()
+            # I decided to not transition the colours in the end because of two reasons: 1)
+            # You can't give input to the game even after the path has been found and while
+            # the animations are still happening. This is bad use experience. And 2) It can
+            # be useful to see the path convergence history through colour gradients.
+            # If you want to enable, just uncomment the line below.
+            # self.handle_end_transitions()
             print('Path found') if path_found else print('Path not found!')
         else:
             print('Origin and goal not set!')
