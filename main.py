@@ -10,10 +10,18 @@ from Lattice import Lattice, LatticeInfo, ScreenDim
 
 
 EventKeyToDrawModeMapping = Dict[int, DrawMode]
-event_key_to_draw_mode_mapping = {
+event_key_to_draw_mode_mapping: EventKeyToDrawModeMapping = {
     pg.K_o: DrawMode.SET_ORIGIN,
     pg.K_e: DrawMode.SET_VACANT,
     pg.K_g: DrawMode.SET_GOAL,
+}
+
+EventKeyToPathfindingOptionMapping = Dict[int, PathfindingOption]
+event_key_to_pathfinding_mapping = {
+    pg.K_d: PathfindingOption.DFS,
+    pg.K_b: PathfindingOption.BFS,
+    pg.K_k: PathfindingOption.DIJKSTRA,
+    pg.K_a: PathfindingOption.A_STAR,
 }
 
 NODE_SIZE = 15
@@ -65,15 +73,10 @@ while True:
                 lattice.generate_maze()
             if event.key == pg.K_r:
                 lattice.randomize(0.25)
-            elif event.key == pg.K_d:
-                lattice.visualize(PathfindingOption.DFS)
-            elif event.key == pg.K_b:
-                lattice.visualize(PathfindingOption.BFS)
-            elif event.key == pg.K_k:
-                lattice.visualize(PathfindingOption.DIJKSTRA)
-            elif event.key == pg.K_a:
-                lattice.visualize(PathfindingOption.A_STAR)
-            elif event.key == pg.K_l:
+            if event.key in [pg.K_d, pg.K_b, pg.K_k, pg.K_a, pg.K_l]:
+                pathfinding_option = event_key_to_pathfinding_mapping[event.key]
+                lattice.visualize(pathfinding_option)
+            if event.key == pg.K_l:
                 lattice.game_of_life()
             else:
                 lattice.set_draw_mode(
