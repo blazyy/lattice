@@ -1,3 +1,4 @@
+import math
 import random
 import pygame as pg
 from typing import Dict, List, Tuple, Optional
@@ -387,6 +388,68 @@ class Lattice:
             if not node:
                 break
 
+    def a_star(self) -> bool:
+        '''
+        Finds a path from origin to goal. Currently, squares on a grid cannot be assigned weights (they can, but it's hard to visualize).
+        Because of this, weights between nodes are all by default to 1. Heuristic is euclidean distance, by assuming lattice nodes exist
+        in the 4th quadrant of an axis. This is why the y co-ords are negated, although I'm not sure it makes much of a difference.
+
+        The heuristic is only considered when choosing which node to select out of a node's neighbours. We do not add it to the distance
+        when updating distance from origin node.
+        '''
+
+        dist = defaultdict(lambda: float('inf'))
+        dist[self.origin] = 0
+        node = self.origin
+
+        # Calculating the initial heuristic values using Euclidean distances
+        goal_pos = self.get_goal().get_pos()
+        x1, y1 = goal_pos.r, -goal_pos.c
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                node_pos = self.get_node(r, c).get_pos()
+                x2, y2 = node_pos.r, -node_pos.c
+                euclid_distance = math.sqrt(((x2 - x1) ** 2) + ((y2 - y1) ** 2))
+                self.get_node(r, c).set_heuristic(euclid_distance)
+
+        while True:
+            if node.get_state() != NodeState.ORIGIN:
+                self.update_node_state_and_render(node, NodeState.VISITED)
+            neighbours = self.get_neighbours(node)
+            unvisited_neighbours = list(
+                filter(
+                    lambda n: n.get_state()
+                    not in [NodeState.VISITED, NodeState.ORIGIN, NodeState.WALL],
+                    neighbours,
+                )
+            )
+            for neighbour in unvisited_neighbours:
+                if (
+                    dist[node] + 1 < dist[neighbour]
+                ):  # If current distance to a node is smaller than any previous possible distance, update it. Every node is only 1 node away from other nodes due to the fact that this is a nxn grid with no weights.
+                    dist[neighbour] = dist[node] + 1
+                    neighbour.set_predecessor(
+                        node
+                    )  # Whenever we visit a node, mark the predecessor so that when a path is found, we can backtrack back to origin.
+                if neighbour == self.goal:
+                    self.display_path_to_origin(neighbour)
+                    return True
+            # "Priority Queue"
+            smallest_path_dist, smallest_path_node = float('inf'), None
+            for node in dist.keys():
+                if dist[
+                    node
+                ] + node.get_heuristic() < smallest_path_dist and node.get_state() not in [
+                    NodeState.VISITED,
+                    NodeState.ORIGIN,
+                    NodeState.WALL,
+                ]:
+                    smallest_path_dist = dist[node] + node.get_heuristic()
+                    smallest_path_node = node
+            node = smallest_path_node
+            if not node:
+                break
+
     def randomize(self, density: float) -> None:
         '''
         Randomly sets a node to a wall, depending on the density amount specified. Think of
@@ -614,13 +677,18 @@ class Lattice:
         self.draw()
 
     def visualize(self, option: PathfindingOption):
-        path_found = None
-        self.clear_certain_state_nodes([NodeState.VISITED, NodeState.PATH])
-        if option == PathfindingOption.DFS:
-            path_found = self.dfs()
-        elif option == PathfindingOption.BFS:
-            path_found = self.bfs()
-        elif option == PathfindingOption.DIJKSTRA:
-            path_found = self.dijkstra()
-        self.handle_end_transitions()
-        print('Path found') if path_found else print('Path not found!')
+        if self.get_goal() and self.get_origin():
+            path_found = None
+            self.clear_certain_state_nodes([NodeState.VISITED, NodeState.PATH])
+            if option == PathfindingOption.DFS:
+                path_found = self.dfs()
+            elif option == PathfindingOption.BFS:
+                path_found = self.bfs()
+            elif option == PathfindingOption.DIJKSTRA:
+                path_found = self.dijkstra()
+            elif option == PathfindingOption.A_STAR:
+                path_found = self.a_star()
+            self.handle_end_transitions()
+            print('Path found') if path_found else print('Path not found!')
+        else:
+            print('Origin and goal not set!')

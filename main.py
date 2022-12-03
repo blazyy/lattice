@@ -46,6 +46,7 @@ L - Begin Game of Life simulation
 D - Begin DFS visualization (only starts if Origin and Goal are both set)
 B - Begin BFS visualization (only starts if Origin and Goal are both set)
 K - Begin Dijkstra's Pathfinding visualization
+A - Begin A* Search Visualization
 '''
 
 while True:
@@ -64,12 +65,14 @@ while True:
                 lattice.generate_maze()
             if event.key == pg.K_r:
                 lattice.randomize(0.25)
-            elif event.key == pg.K_d and lattice.get_goal() and lattice.get_origin():
+            elif event.key == pg.K_d:
                 lattice.visualize(PathfindingOption.DFS)
-            elif event.key == pg.K_b and lattice.get_goal() and lattice.get_origin():
+            elif event.key == pg.K_b:
                 lattice.visualize(PathfindingOption.BFS)
-            elif event.key == pg.K_k and lattice.get_goal() and lattice.get_origin():
+            elif event.key == pg.K_k:
                 lattice.visualize(PathfindingOption.DIJKSTRA)
+            elif event.key == pg.K_a:
+                lattice.visualize(PathfindingOption.A_STAR)
             elif event.key == pg.K_l:
                 lattice.game_of_life()
             else:

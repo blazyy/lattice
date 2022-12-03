@@ -89,6 +89,7 @@ class Node:
 
         self.state = state
         self.pos = pos
+        self.heuristic = None
         self.predecessor = None
         self.already_rendered = False
 
@@ -112,6 +113,22 @@ class Node:
         '''
 
         return self.pos
+
+    def get_heuristic(self) -> float:
+        '''
+        Returns the heuristic value for a particular Node.
+        In this implementation, it is Euclidean distance.
+        '''
+
+        return self.heuristic
+
+    def set_heuristic(self, val) -> None:
+        '''
+        Sets the heuristic value for a particular node.
+        In this implementation, it is Euclidean distance.
+        '''
+
+        self.heuristic = val
 
     def set_predecessor(self, predecessor: Node) -> None:
         '''

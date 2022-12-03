@@ -21,3 +21,4 @@ class PathfindingOption(Enum):
     BFS = 1
     DFS = 2
     DIJKSTRA = 3
+    A_STAR = 4
