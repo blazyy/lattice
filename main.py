@@ -32,6 +32,7 @@ lattice_info = LatticeInfo(screen_dim, NODE_SIZE)
 
 clock = pg.time.Clock()
 mouse = pg.mouse.set_cursor(pg.cursors.tri_left)
+pg.display.set_caption('Lattice')
 screen = pg.display.set_mode(
     (lattice_info.screen_dim.w, lattice_info.screen_dim.h), pg.DOUBLEBUF
 )
