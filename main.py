@@ -55,6 +55,7 @@ D - Begin DFS visualization (only starts if Origin and Goal are both set)
 B - Begin BFS visualization (only starts if Origin and Goal are both set)
 K - Begin Dijkstra's Pathfinding visualization
 A - Begin A* Search Visualization
+Q - Quit
 '''
 
 while True:
@@ -65,7 +66,6 @@ while True:
             mouse_pressed = True
         if event.type == pg.MOUSEBUTTONUP and event.button == 1:
             mouse_pressed = False
-
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_c:
                 lattice.clear()
@@ -73,11 +73,13 @@ while True:
                 lattice.generate_maze()
             if event.key == pg.K_r:
                 lattice.randomize(0.25)
-            if event.key in [pg.K_d, pg.K_b, pg.K_k, pg.K_a, pg.K_l]:
+            if event.key in event_key_to_pathfinding_mapping.keys():
                 pathfinding_option = event_key_to_pathfinding_mapping[event.key]
                 lattice.visualize(pathfinding_option)
             if event.key == pg.K_l:
                 lattice.game_of_life()
+            if event.key == pg.K_q:
+                exit()
             else:
                 lattice.set_draw_mode(
                     event_key_to_draw_mode_mapping.get(

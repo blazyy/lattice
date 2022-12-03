@@ -219,19 +219,13 @@ class Lattice:
 
         # Conditions below restrict only one origin node and one goal node to be set.
         if new_state == NodeState.ORIGIN:
-            if not self.origin:
-                self.origin = node
-            else:
-                return
-        elif node.get_state() == NodeState.ORIGIN and new_state != NodeState.ORIGIN:
-            self.origin = None
+            if self.origin:
+                self.update_node_state_and_render(self.origin, NodeState.VACANT)
+            self.origin = node
         elif new_state == NodeState.GOAL:
-            if not self.goal:
-                self.goal = node
-            else:
-                return
-        elif node.get_state() == NodeState.GOAL and new_state != NodeState.GOAL:
-            self.goal = None
+            if self.goal:
+                self.update_node_state_and_render(self.goal, NodeState.VACANT)
+            self.goal = node
 
         self.update_node_state_and_render(node, new_state)
 
