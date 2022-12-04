@@ -24,8 +24,8 @@ event_key_to_pathfinding_mapping = {
     pg.K_a: PathfindingOption.A_STAR,
 }
 
-NODE_SIZE = 15
-SCREEN_SIDE_LEN = 1500
+NODE_SIZE = 10
+SCREEN_SIDE_LEN = 1000
 
 screen_dim = ScreenDim(SCREEN_SIDE_LEN, SCREEN_SIDE_LEN)
 lattice_info = LatticeInfo(screen_dim, NODE_SIZE)

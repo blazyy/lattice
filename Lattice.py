@@ -194,6 +194,10 @@ class Lattice:
         Updates a node's state and renders it on the screen.
         '''
 
+        if self.get_origin() == node and new_state != NodeState.ORIGIN:
+            self.origin = None
+        if self.get_goal() == node and new_state != NodeState.GOAL:
+            self.goal = None
         node.set_state(new_state)
         self.handle_node_rendering(node)
 
